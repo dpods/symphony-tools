@@ -1,32 +1,56 @@
+const config = {
+    debug: true
+}
+
+const debug = (message, ...context) => {
+    if (config.debug) {
+        console.log(`>>> content-isolated ${message}`, ...context)
+    }
+}
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    console.log('111a')
-    if (request.message === "get_symphony_json") {
-        console.log('222a')
-        window.dispatchEvent(new CustomEvent('tagger_get_symphony_json'))
-        console.log('dispatched CustomEvent(tagger_get_symphony_json)')
+    debug('received message', { message: request.message })
+    switch (request.message) {
+        case 'add_tags':
+            window.dispatchEvent(new CustomEvent('get_symphony_json', {
+                detail: {
+                    action: 'add_tags'
+                }
+            }))
+            break
     }
 });
 
-window.addEventListener('tagger_return_symphony_json', (event) => {
-    console.log('received CustomEvent(tagger_return_symphony_json)')
-    console.log('====', event.detail)
-
-    const taggedSymphony = tagSymphony(event.detail)
-
-    window.dispatchEvent(new CustomEvent('tagger_set_symphony_json', {
-        detail: taggedSymphony
-    }))
+window.addEventListener('symphony_json_result', (event) => {
+    debug('received message', { action: event.detail.action })
+    switch (event.detail.action) {
+        case 'add_tags': {
+            const taggedSymphony = tagSymphony(event.detail.symphony)
+            window.dispatchEvent(new CustomEvent('set_symphony_json', {
+                detail: taggedSymphony
+            }))
+        }
+    }
 })
-console.log('registered event listener (tagger_return_symphony_json)')
 
 function tagSymphony(json) {
-    console.log('>>> 1')
     let depth = 0
+
+    function isAssetNode(json) {
+        return json.hasOwnProperty('step') && json['step'] === 'asset'
+    }
 
     function tag(json) {
         if (isAssetNode(json)) {
             depth += 1
-            json['name'] = `[${depth}] ${json['name'] ?? ''}`
+            json['name'] = json['name'] ?? ''
+
+            if (/^\[[0-9]+\]?(.*)/.test(json['name'])) {
+                const matches = json['name'].match(/^\[[0-9]+\]?(.*)/)
+                json['name'] = `[${depth}] ${matches[1].trim()}`
+            } else {
+                json['name'] = `[${depth}] ${json['name'] ?? ''}`
+            }
         }
 
         if (json['children'] !== undefined) {
@@ -38,10 +62,6 @@ function tagSymphony(json) {
         }
 
         return json
-    }
-
-    function isAssetNode(json) {
-        return json.hasOwnProperty('step') && json['step'] === 'asset'
     }
 
     return tag(json)

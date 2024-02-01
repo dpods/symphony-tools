@@ -1,5 +1,12 @@
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById('callFunctions').addEventListener('click', function() {
-        chrome.runtime.sendMessage({action: "tag_symphony"}, (response) => {});
+    console.log('>>> loaded')
+    document.getElementById('addTags').addEventListener('click', function() {
+        console.log('>>> click addTags')
+        chrome.runtime.sendMessage({ action: 'add_tags' }, (response) => {});
+    });
+
+    document.getElementById('clearTags').addEventListener('click', function() {
+        console.log('>>> click clearTags')
+        chrome.runtime.sendMessage({ action: 'clear_tags' }, (response) => {});
     });
 });

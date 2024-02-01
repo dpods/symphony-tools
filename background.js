@@ -1,18 +1,26 @@
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
-{
-    console.log('AAA')
-    if(request.action === "tag_symphony") {
-        console.log('BBB')
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            console.log('CCC')
-            // Send a message to the content script in the active tab
-            chrome.tabs.sendMessage(tabs[0].id, { message: "get_symphony_json" }, (resp) => {
-                console.log('DDD', resp)
-                // chrome.tabs.query({ active: true }, function(tabs) {
-                //     console.log('EEE')
-                //     sendResponse({ result: 'success' });
-                // });
-            });
-        });
+const config = {
+    debug: true
+}
+
+const debug = (message, ...context) => {
+    if (config.debug) {
+        console.log(`>>> background ${message}`, ...context)
+    }
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    debug('received message', { action: request.action })
+    switch (request.action) {
+        case 'add_tags':
+            sendMessage('add_tags')
+            break
     }
 });
+
+const sendMessage = (message) => {
+    debug('sending message', { message: message })
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        // Send a message to the isolated content script in the active tab
+        chrome.tabs.sendMessage(tabs[0].id, { message: message }, (resp) => {});
+    });
+}
