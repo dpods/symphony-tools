@@ -7,6 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById('clearTags').addEventListener('click', function() {
         console.log('>>> click clearTags')
-        chrome.runtime.sendMessage({ action: 'clear_tags' }, (response) => {});
+        chrome.runtime.sendMessage({ action: 'remove_tags' }, (response) => {});
     });
 });

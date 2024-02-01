@@ -14,6 +14,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'add_tags':
             sendMessage('add_tags')
             break
+        case 'remove_tags':
+            sendMessage('remove_tags')
+            break
     }
 });
 
