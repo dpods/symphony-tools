@@ -1,5 +1,5 @@
 const config = {
-    debug: true
+    debug: false
 }
 
 const debug = (message, ...context) => {
