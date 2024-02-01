@@ -15,4 +15,10 @@ https://github.com/dpods/symphony-tools/releases/latest
 1. Pull up any Symphony in editor mode. The url must look like https://app.composer.trade/symphony/0WHVQoRncupHxAACqcCT
 2. Click the Symphony Tools extension and then click **Tag Assets**
 3. All assets should be prefixed with square brakcets and a number. Each asset will be given a unique number for that Symphony. 
-4. On your portfolio page ([https://app.composer.trade/portfolio](https://app.composer.trade/portfolio)) click the arrow next to the Symphony name to expand the Live Holdings. Each asset that you're holding will show the unique number in the square brackets. This number corresponds to the same number in the Editor. You can use this number to lookup the asset in the Editor to figure out which logic branches were executed during the trading period. 
+4. On your portfolio page ([https://app.composer.trade/portfolio](https://app.composer.trade/portfolio)) click the arrow next to the Symphony name to expand the Live Holdings. Each asset that you're holding will show the unique number in the square brackets. This number corresponds to the same number in the Editor. You can use this number to lookup the asset in the Editor to figure out which logic branches were executed during the trading period.
+
+### Donate
+
+Donations are welcome but not necessary. If you find this tool useful you can donate here to support the development and maintenance to keep it working.
+
+<a href="https://www.buymeacoffee.com/dpods" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
