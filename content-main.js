@@ -12,7 +12,7 @@ window.addEventListener('get_symphony_json', (event) => {
     debug('received event', event)
     const e = new CustomEvent('symphony_json_result', {
         detail: {
-            action: event.detail.action,
+            ...event.detail,
             symphony: window.cli.getSymphonyJson()
         }
     })

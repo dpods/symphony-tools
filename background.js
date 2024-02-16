@@ -11,18 +11,26 @@ const debug = (message, ...context) => {
 const backgroundListener = (request, sender, sendResponse) => {
     debug('received message', { action: request.action })
     switch (request.action) {
-        case 'remove_metadata':
+        case 'remove_metadata': {
             sendMessage('remove_metadata')
             break
+        }
+        case 'find_and_replace': {
+            sendMessage('find_and_replace', {
+                find: request.find,
+                replace: request.replace
+            })
+            break
+        }
     }
     return true;
 }
 
-const sendMessage = (message) => {
+const sendMessage = (message, data = {}) => {
     debug('sending message', { message: message })
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         // Send a message to the isolated content script in the active tab
-        chrome.tabs.sendMessage(tabs[0].id, { message: message }, (resp) => {});
+        chrome.tabs.sendMessage(tabs[0].id, { message: message, data: data }, (resp) => {});
     });
 }
 
