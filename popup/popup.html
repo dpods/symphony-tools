@@ -25,9 +25,9 @@
             </h1>
         </div>
         <div class="pt-4">
-            <div class="flex justify-center gap-3">
+            <div class="flex justify-end gap-3">
                 <button id="removeMetadata" type="button" class="rounded bg-slate-300 px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300">
-                    Remove Metadata
+                    Strip Metadata
                 </button>
             </div>
         </div>
@@ -51,7 +51,14 @@
                        placeholder="ticker"
                        oninput="this.value = this.value.toUpperCase()">
             </div>
-            <div class="flex justify-end pt-2">
+            <div class="flex justify-between pt-2">
+                <div id="findResults" class="flex justify-between grow invisible text-left mr-2">
+                    <label for="findResults" class="block xs leading-6 text-gray-600 sm:pt-1.5 mr-2">Results</label>
+                    <div>
+                        <div><span id="findResultsAssets">0</span> assets</div>
+                        <div><span id="findResultsIfElse">0</span> if/else</div>
+                    </div>
+                </div>
                 <button id="findAndReplace" type="button" class="rounded bg-slate-300 px-2 py-1 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300">
                     Replace all
                 </button>

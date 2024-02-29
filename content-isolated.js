@@ -19,6 +19,15 @@ const background2Listener = function (request, sender, sendResponse) {
             }))
             break
         }
+        case 'find': {
+            window.dispatchEvent(new CustomEvent('get_symphony_json', {
+                detail: {
+                    action: 'find',
+                    find: request.data.find,
+                }
+            }))
+            break
+        }
         case 'find_and_replace': {
             window.dispatchEvent(new CustomEvent('get_symphony_json', {
                 detail: {
@@ -43,6 +52,17 @@ window.addEventListener('symphony_json_result', (event) => {
             window.dispatchEvent(new CustomEvent('set_symphony_json', {
                 detail: modifiedSymphony
             }))
+            break
+        }
+        case 'find': {
+            const occurances = find(event.detail.symphony, event.detail.find)
+            debug('sending result', { occurances })
+            chrome.runtime.sendMessage({
+                action: "find_result",
+                data: {
+                    occurances: occurances
+                }
+            });
             break
         }
         case 'find_and_replace': {
@@ -78,6 +98,53 @@ function removeMetadata(json) {
     }
 
     return removeMetadataFromAsset(json)
+}
+
+function find(json, find) {
+    function isAssetNode(json) {
+        return json.hasOwnProperty('step') && json['step'] === 'asset'
+    }
+
+    function isIfNode(json) {
+        return json.hasOwnProperty('step') && json['step'] === 'if-child'
+    }
+
+    function isMatch(json, find) {
+        return json.hasOwnProperty('ticker') && json['ticker'].toUpperCase() === find.toUpperCase()
+    }
+
+    function isLhsMatch(json, find) {
+        return json.hasOwnProperty('lhs-val') && json['lhs-val'].toUpperCase() === find.toUpperCase()
+    }
+
+    function isRhsMatch(json, find) {
+        return json.hasOwnProperty('rhs-val') && json['rhs-val'].toUpperCase() === find.toUpperCase()
+    }
+
+    function findAndReplaceTicker(json, find, occurrances) {
+        if (isAssetNode(json) && isMatch(json, find)) {
+            occurrances.assets++
+        }
+
+        if (isIfNode(json)) {
+            if (isLhsMatch(json, find)) {
+                occurrances.conditionals++
+            }
+            if (isRhsMatch(json, find)) {
+                occurrances.conditionals++
+            }
+        }
+
+        if (json['children'] !== undefined) {
+            for (const child of json['children']) {
+                occurrances = findAndReplaceTicker(child, find, occurrances)
+            }
+        }
+
+        return occurrances
+    }
+
+    return findAndReplaceTicker(json, find, {assets: 0, conditionals: 0})
 }
 
 function findAndReplace(json, find, replace) {
