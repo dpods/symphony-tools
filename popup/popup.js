@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", function() {
             find: this.value,
         })
 
+        this.value = this.value.toUpperCase()
+
         if (this.value === '') {
             findResults.classList.add('invisible')
         } else {
@@ -25,6 +27,10 @@ document.addEventListener("DOMContentLoaded", function() {
             }, (resp) => {});
             findResults.classList.remove('invisible')
         }
+    });
+
+    document.getElementById('replace').addEventListener('input', function (evt) {
+        this.value = this.value.toUpperCase()
     });
 
     document.getElementById('findAndReplace').addEventListener('click', function() {

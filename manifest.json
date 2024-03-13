@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Symphony Tools",
-    "description": "A minimal example of a chrome extension using manifest v3",
+    "description": "Utility extension that makes working with Composer Symphonies easier",
     "version": "1.0.0",
     "icons": {
         "16": "images/icon16.png",
@@ -24,7 +24,10 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://app.composer.trade/symphony/*"],
+            "matches": [
+                "https://app.composer.trade/portfolio",
+                "https://app.composer.trade/symphony/*"
+            ],
             "js": ["content-main.js"],
             "world": "MAIN"
         },
