@@ -1,5 +1,5 @@
 const config = {
-    debug: true
+    debug: false
 }
 
 const debug = (message, ...context) => {
@@ -34,6 +34,12 @@ const backgroundListener = (request, sender, sendResponse) => {
             })
             break
         }
+        case 'replace_result': {
+            sendResultToPopup('find', {
+                occurances: request.data.occurances,
+            })
+            break
+        }
     }
     return true;
 }
@@ -43,7 +49,9 @@ const sendMessage = (message, data = {}) => {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         // Send a message to the isolated content script in the active tab
         chrome.tabs.sendMessage(tabs[0].id, { message: message, data: data }, (resp) => {
-            sendResultToPopup(resp.action, resp.data)
+            if (resp !== undefined) {
+                sendResultToPopup(resp.action, resp.data)
+            }
         });
     });
 }

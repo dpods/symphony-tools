@@ -1,5 +1,5 @@
 const config = {
-    debug: true
+    debug: false
 }
 
 const debug = (message, ...context) => {
@@ -70,6 +70,16 @@ window.addEventListener('symphony_json_result', (event) => {
             window.dispatchEvent(new CustomEvent('set_symphony_json', {
                 detail: modifiedSymphony
             }))
+
+            chrome.runtime.sendMessage({
+                action: "replace_result",
+                data: {
+                    occurances: {
+                        assets: 0,
+                        conditionals: 0
+                    },
+                }
+            });
             break
         }
     }
