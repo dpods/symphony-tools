@@ -50,7 +50,6 @@ window.navigation.addEventListener("navigate", (event) => {
 })
 
 function renderAggregatedLiveHoldings(mainEl) {
-    console.log(">>>> main element was rendered");
     getAggregatedLiveHoldings().then((holdings) => {
         const table = document.createElement("table");
         table.classList.add('min-w-full')
@@ -175,6 +174,9 @@ function renderAggregatedLiveHoldings(mainEl) {
         divInner.classList.add('hidden', 'md:block', 'shadow-sm', 'overflow-auto', 'overflow-x-scroll', 'border-b', 'border-b-modal-border', 'mb-16')
         divInner.appendChild(table)
 
+        let header = document.createElement("div");
+        header.className = 'flex justify-between'
+
         let divLogo = document.createElement("div");
         divLogo.classList.add('text-sm', 'text-dark', 'font-medium', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
 
@@ -184,15 +186,21 @@ function renderAggregatedLiveHoldings(mainEl) {
         span2.style = 'margin-left: 0.5rem;'
         span2.innerText = 'Symphony Tools Extension'
 
+        const donate = document.createElement('div')
+        donate.className = 'text-sm text-dark font-medium whitespace-nowrap py-4 px-6 truncate flex items-center text-left'
+        donate.innerHTML = '<a href="https://www.buymeacoffee.com/dpods" class="text-xs underline font-light" target="_blank">Support this extension</a>'
+
         divLogo.appendChild(span1)
         divLogo.appendChild(span2)
+        header.appendChild(divLogo)
+        header.appendChild(donate)
 
         const tbody = table.getElementsByTagName('tbody')[0]
         tbody.classList.add('block','bg-sheet','divide-y','divide-divider-light')
 
         let divOuter = document.createElement("div");
         divOuter.classList.add('bg-sheet')
-        divOuter.appendChild(divLogo)
+        divOuter.appendChild(header)
         divOuter.appendChild(divInner)
 
         mainEl.appendChild(divOuter)
@@ -202,19 +210,10 @@ function renderAggregatedLiveHoldings(mainEl) {
 const getAggregatedLiveHoldings = async () => {
     const token = await cli.getTemporaryToken()
 
-    const resp = await fetch(
-        'https://stagehand-api.composer.trade/api/v1/accounts/list',
-        {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        }
-    )
+    const accountId = await getAccountId(token)
 
-    const accounts = await resp.json()
-    console.log('>>>> ACCOUNTS', accounts)
+    console.log('ACCOUNT ID', accountId)
 
-    const accountId = accounts.accounts[0].account_uuid
     const response = await fetch(
         `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${accountId}/symphony-stats-meta`,
         {
@@ -224,7 +223,8 @@ const getAggregatedLiveHoldings = async () => {
         }
     )
     const symphonyStats = await response.json()
-    console.log('>>>> symphonyStats', symphonyStats)
+
+    console.log('symphonyStats', symphonyStats)
 
     const aggregateHoldings = {}
     let totalValue = 0
@@ -311,4 +311,38 @@ const getHoldingAllocationsPerSymphony = (holding) => {
     cell2.appendChild(div2)
 
     return table
+}
+
+const getAccountId = async (token) => {
+    const resp = await fetch(
+        'https://stagehand-api.composer.trade/api/v1/accounts/list',
+        {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }
+    )
+    const data = await resp.json()
+
+    const isTaxable = getElementsByText('Taxable', 'button').length > 0
+    const isRoth = getElementsByText('Roth', 'button').length > 0
+    const isTraditional = getElementsByText('Traditional', 'button').length > 0
+
+    let account
+    if (isTaxable) {
+        account = data.accounts.filter(acct => acct.account_type.toLowerCase().includes('individual'))[0]
+    } else if (isRoth) {
+        account = data.accounts.filter(acct => acct.account_type.toLowerCase().includes('roth'))[0]
+    } else if (isTraditional) {
+        account = data.accounts.filter(acct => acct.account_type.toLowerCase().includes('traditional'))[0]
+    } else {
+        throw new Error('[Symphony Tools Extension]: Unable to detect account type')
+    }
+
+    console.log('>>>> ACCT', account)
+    return account.account_uuid
+}
+
+function getElementsByText(str, tag = 'a') {
+    return Array.prototype.slice.call(document.getElementsByTagName(tag)).filter(el => el.textContent.trim().includes(str.trim()));
 }

@@ -131,7 +131,7 @@ function find(json, find) {
         return json.hasOwnProperty('rhs-val') && json['rhs-val'].toUpperCase() === find.toUpperCase()
     }
 
-    function findAndReplaceTicker(json, find, occurrances) {
+    function findTicker(json, find, occurrances) {
         if (isAssetNode(json) && isMatch(json, find)) {
             occurrances.assets++
         }
@@ -147,14 +147,14 @@ function find(json, find) {
 
         if (json['children'] !== undefined) {
             for (const child of json['children']) {
-                occurrances = findAndReplaceTicker(child, find, occurrances)
+                occurrances = findTicker(child, find, occurrances)
             }
         }
 
         return occurrances
     }
 
-    return findAndReplaceTicker(json, find, {assets: 0, conditionals: 0})
+    return findTicker(json, find, {assets: 0, conditionals: 0})
 }
 
 function findAndReplace(json, find, replace) {

@@ -32,6 +32,13 @@
             "world": "MAIN"
         },
         {
+            "matches": [
+                "https://app.composer.trade/symphony/*"
+            ],
+            "js": ["symphony-main.js"],
+            "world": "MAIN"
+        },
+        {
             "matches": ["https://app.composer.trade/symphony/*"],
             "js": ["content-isolated.js"]
         }
@@ -39,5 +46,5 @@
     "externally_connectable": {
         "matches": ["https://app.composer.trade/symphony/*"]
     },
-    "permissions": ["activeTab", "scripting"]
+    "permissions": ["activeTab"]
 }
