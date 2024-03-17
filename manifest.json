@@ -10,17 +10,12 @@
     },
     "action": {
         "default_title": "Chrome Addon v3 Starter",
-        "default_popup": "popup/popup.html",
         "world": "MAIN",
         "default_icon": {
             "16": "images/icon16.png",
             "48": "images/icon48.png",
             "128": "images/icon128.png"
         }
-    },
-    "background": {
-        "service_worker": "background.js",
-        "type": "module"
     },
     "content_scripts": [
         {
@@ -30,17 +25,6 @@
             ],
             "js": ["content-main.js"],
             "world": "MAIN"
-        },
-        {
-            "matches": [
-                "https://app.composer.trade/symphony/*"
-            ],
-            "js": ["symphony-main.js"],
-            "world": "MAIN"
-        },
-        {
-            "matches": ["https://app.composer.trade/symphony/*"],
-            "js": ["content-isolated.js"]
         }
     ],
     "externally_connectable": {
