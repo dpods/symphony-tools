@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Symphony Tools",
     "description": "Utility extension that makes working with Composer Symphonies easier",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "icons": {
         "16": "images/icon16.png",
         "48": "images/icon48.png",
@@ -28,7 +28,7 @@
         }
     ],
     "externally_connectable": {
-        "matches": ["https://app.composer.trade/symphony/*"]
+        "matches": ["https://app.composer.trade/*"]
     },
     "permissions": ["activeTab"]
 }

@@ -1,14 +1,7 @@
 {
-  "scripts": {
-    "build": "npx tailwindcss -i ./popup/tailwind.css -o popup/styles.css",
-    "dev": "npx tailwindcss -i ./popup/tailwind.css -o popup/styles.css --watch"
-  },
-  "devDependencies": {
-    "postcss": "^8.4.33",
-    "postcss-loader": "^8.1.0"
-  },
-  "dependencies": {
-    "autoprefixer": "^10.4.17",
-    "tailwindcss": "^3.4.1"
-  }
+  "name": "Symphony Tools Extension",
+  "version": "2.0.0",
+  "scripts": {},
+  "devDependencies": {},
+  "dependencies": {}
 }
