@@ -29,6 +29,5 @@
     ],
     "externally_connectable": {
         "matches": ["https://app.composer.trade/*"]
-    },
-    "permissions": ["activeTab"]
+    }
 }
