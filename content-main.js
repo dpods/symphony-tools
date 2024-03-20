@@ -23,6 +23,7 @@
 
         div.appendChild(logo())
         div.appendChild(stripMetadataButton())
+        div.appendChild(clickToCopy())
         div.appendChild(findAndReplaceForm())
         div.appendChild(donate())
 
@@ -30,14 +31,19 @@
             this.value = this.value.toUpperCase()
 
             const findResults = document.getElementById('findResults')
+            const replaceAssetsCheckbox = document.getElementById('ste-replace-assets')
+            const replaceIfElseCheckbox = document.getElementById('ste-replace-ifelse')
             const findResultsAssets = document.getElementById('findResultsAssets')
             const findResultsIfElse = document.getElementById('findResultsIfElse')
 
             if (this.value === '') {
+                replaceAssetsCheckbox.checked = false
+                replaceIfElseCheckbox.checked = false
                 findResults.classList.add('invisible')
             } else {
                 const occurances = find(getSymphonyJson(), this.value)
-                console.log('>>> ', occurances)
+                replaceAssetsCheckbox.checked = true
+                replaceIfElseCheckbox.checked = true
                 findResultsAssets.innerHTML = occurances.assets
                 findResultsIfElse.innerHTML = occurances.conditionals
                 findResults.classList.remove('invisible')
@@ -55,10 +61,16 @@
         document.getElementById('findAndReplaceBtn').addEventListener('click', (e) => {
             const findValue = document.getElementById('find').value
             const replaceValue = document.getElementById('replace').value
+            const replaceAssets = document.getElementById('ste-replace-assets').checked
+            const replaceIfElse = document.getElementById('ste-replace-ifelse').checked
             const findResultsAssets = document.getElementById('findResultsAssets')
             const findResultsIfElse = document.getElementById('findResultsIfElse')
 
-            const modifiedSymphonyJson = findAndReplace(getSymphonyJson(), findValue, replaceValue)
+            if (findValue === '' || replaceValue === '') {
+                return
+            }
+
+            const modifiedSymphonyJson = findAndReplace(getSymphonyJson(), findValue, replaceValue, replaceAssets, replaceIfElse)
             setSymphonyJson(modifiedSymphonyJson)
 
             const occurances = find(modifiedSymphonyJson, findValue)
@@ -163,19 +175,41 @@
             wrapper.className = 'block invisible text-xs'
 
             let assets = document.createElement('div')
+            assets.className = 'flex flex-row items-center'
+
+            var replaceAssetsCheckbox = document.createElement('input');
+            replaceAssetsCheckbox.id = 'ste-replace-assets'
+            replaceAssetsCheckbox.className = 'mr-1'
+            replaceAssetsCheckbox.type = "checkbox";
+            replaceAssetsCheckbox.checked = true;
+            replaceAssetsCheckbox.click()
+
             let span1 = document.createElement('span')
             span1.id = 'findResultsAssets'
+            span1.className = 'mr-1'
             let span2 = document.createElement('span')
             span2.innerText = ' assets'
+            assets.appendChild(replaceAssetsCheckbox)
             assets.appendChild(span1)
             assets.appendChild(span2)
             wrapper.appendChild(assets)
 
             let ifElse = document.createElement('div')
+            ifElse.className = 'flex flex-row items-center'
+
+            var replaceIfElseCheckbox = document.createElement('input');
+            replaceIfElseCheckbox.id = 'ste-replace-ifelse'
+            replaceIfElseCheckbox.className = 'mr-1'
+            replaceIfElseCheckbox.type = "checkbox";
+            replaceIfElseCheckbox.checked = true;
+            replaceIfElseCheckbox.click()
+
             let span3 = document.createElement('span')
             span3.id = 'findResultsIfElse'
+            span3.className = 'mr-1'
             let span4 = document.createElement('span')
             span4.innerText = ' if/else'
+            ifElse.appendChild(replaceIfElseCheckbox)
             ifElse.appendChild(span3)
             ifElse.appendChild(span4)
             wrapper.appendChild(ifElse)
@@ -218,6 +252,46 @@
         wrapper.appendChild(row1)
         wrapper.appendChild(row2)
 
+        return wrapper
+    }
+
+    const clickToCopy = () => {
+        const copyJson = () => {
+            navigator.clipboard.writeText(JSON.stringify(cli.getSymphonyJson()));
+        }
+
+        const copyEdn = () => {
+            navigator.clipboard.writeText(cli.getSymphonyEdn());
+        }
+
+        const button = (buttonText, func, css) => {
+            let button = document.createElement('button')
+            button.className = `w-full text-sm font-light flex items-center justify-center py-2 shadow-inner transition focus:outline-none leading-none select-none ${css} text-dark-soft bg-background`
+
+            let span = document.createElement('span')
+            span.className = 'flex items-center space-x-2'
+
+            let text = document.createElement('span')
+            text.innerText = buttonText
+
+            button.addEventListener('click', (e) => {
+                func()
+                text.innerText = 'Copied'
+                setTimeout(() => {
+                    text.innerText = buttonText
+                }, 1000)
+            })
+
+            span.appendChild(text)
+            button.appendChild(span)
+            return button
+        }
+
+        const wrapper = document.createElement('div')
+        wrapper.className = 'rounded flex border border-asset-border shadow-sm bg-panel-bg divide-x divide-solid divide-asset-border'
+
+        wrapper.appendChild(button('Copy JSON', copyJson, 'rounded-tl rounded-bl'))
+        wrapper.appendChild(button('Copy EDN', copyEdn, 'rounded-tr rounded-br'))
         return wrapper
     }
 
@@ -307,7 +381,7 @@
         return findTicker(json, find, {assets: 0, conditionals: 0})
     }
 
-    function findAndReplace(json, find, replace) {
+    function findAndReplace(json, find, replace, replaceAssets, replaceIfElse) {
         function isAssetNode(json) {
             return json.hasOwnProperty('step') && json['step'] === 'asset'
         }
@@ -329,13 +403,13 @@
         }
 
         function findAndReplaceTicker(json, find, replace) {
-            if (isAssetNode(json) && isMatch(json, find)) {
+            if (replaceAssets && isAssetNode(json) && isMatch(json, find)) {
                 delete json['name']
                 delete json['exchange']
                 json['ticker'] = replace.toUpperCase()
             }
 
-            if (isIfNode(json)) {
+            if (replaceIfElse && isIfNode(json)) {
                 if (isLhsMatch(json, find)) {
                     json['lhs-val'] = replace.toUpperCase()
                 }
@@ -451,7 +525,9 @@
 
         if (holdings.length === 0) {
             const widget = document.getElementById(widgetId);
-            widget.remove();
+            if (widget) {
+                widget.remove();
+            }
             return
         }
 
