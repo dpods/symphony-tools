@@ -447,16 +447,16 @@
         const accountButton = getAccountButton()
         let accountType = getAccountType(accountButton.innerText)
 
-        getAggregatedLiveHoldings(accountType).then((holdings) => {
-            renderTable(mainEl, holdings)
+        getAggregatedLiveHoldings(accountType).then(({account, holdings, token}) => {
+            renderTable(mainEl, account, holdings, token)
         })
 
         const observer = new MutationObserver(function(mutations) {
             const newAccountType = getAccountType(accountButton.textContent)
             if (newAccountType !== accountType) {
                 accountType = newAccountType
-                getAggregatedLiveHoldings(accountType).then((holdings) => {
-                    renderTable(mainEl, holdings)
+                getAggregatedLiveHoldings(accountType).then(({account, holdings, token}) => {
+                    renderTable(mainEl, account, holdings, token)
                 })
             }
         });
@@ -465,9 +465,9 @@
 
     const getAggregatedLiveHoldings = async (accountType) => {
         const token = await cli.getTemporaryToken()
-        const accountId = await getAccountId(token)
+        const account = await getAccount(token)
         const response = await fetch(
-            `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${accountId}/symphony-stats-meta`,
+            `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${account.account_uuid}/symphony-stats-meta`,
             {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -517,10 +517,15 @@
                 return 0
             }
         })
-        return holdings
+
+        return {
+            account,
+            holdings,
+            token
+        }
     }
 
-    const renderTable = (mainEl, holdings) => {
+    const renderTable = (mainEl, account, holdings, token) => {
         const widgetId = 'ste-aggregate-holdings'
 
         if (holdings.length === 0) {
@@ -544,6 +549,7 @@
             const currentRow = table.insertRow(idx)
             currentRow.classList.add('group', 'hover:bg-white', 'transition', 'duration-200', 'flex', 'items-stretch')
             currentRow.style = 'height: 60px'
+            currentRow.id = `ste-ticker-${holding.ticker}`
 
             const cell0 = currentRow.insertCell(0)
             cell0.classList.add('min-w-[24rem]', 'w-[24rem]', 'text-sm', 'text-dark', 'py-4', 'px-6', 'bg-sheet', 'flex', 'items-center', 'group-hover:bg-white', 'transition', 'duration-200')
@@ -567,7 +573,16 @@
             div1.innerText = (holding.totalAllocation * 100).toFixed(2) + '%'
             cell1.appendChild(div1)
 
-            const cell2 = currentRow.insertCell(2)
+            const cellPercentChange = currentRow.insertCell(2)
+            cellPercentChange.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
+            const divPercentChange = document.createElement("div");
+            divPercentChange.id = `ste-ticker-${holding.ticker}-percent-change`
+            divPercentChange.classList.add('font-medium', 'cursor-pointer', 'truncate')
+            divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
+            divPercentChange.innerText = '--'
+            cellPercentChange.appendChild(divPercentChange)
+
+            const cell2 = currentRow.insertCell(3)
             cell2.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div2 = document.createElement("div");
             div2.classList.add('font-medium', 'cursor-pointer', 'truncate')
@@ -575,7 +590,7 @@
             div2.innerText = holding.symphonies.length
             cell2.appendChild(div2)
 
-            const cell3 = currentRow.insertCell(3)
+            const cell3 = currentRow.insertCell(4)
             cell3.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div3 = document.createElement("div");
             div3.classList.add('font-medium', 'cursor-pointer', 'truncate')
@@ -583,7 +598,7 @@
             div3.innerText = (holding.amount).toFixed(2)
             cell3.appendChild(div3)
 
-            const cell4 = currentRow.insertCell(4)
+            const cell4 = currentRow.insertCell(5)
             cell4.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div4 = document.createElement("div");
             div4.classList.add('font-medium', 'cursor-pointer', 'truncate')
@@ -629,21 +644,28 @@
         div2.innerText = "Total Allocation";
         cell2.appendChild(div2)
 
-        const cell3 = row.insertCell(2);
+        const cellPercentChange = row.insertCell(2);
+        cellPercentChange.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
+        const divPercentChange = document.createElement("div");
+        divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
+        divPercentChange.innerText = "Today's % Change";
+        cellPercentChange.appendChild(divPercentChange)
+
+        const cell3 = row.insertCell(3);
         cell3.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
         const div3 = document.createElement("div");
         div3.style = 'min-width: 10rem; max-width: 10rem;'
         div3.innerText = "Symphonies";
         cell3.appendChild(div3)
 
-        const cell4 = row.insertCell(3);
+        const cell4 = row.insertCell(4);
         cell4.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
         const div4 = document.createElement("div");
         div4.style = 'min-width: 10rem; max-width: 10rem;'
         div4.innerText = "Total Quantity";
         cell4.appendChild(div4)
 
-        const cell5 = row.insertCell(4);
+        const cell5 = row.insertCell(5);
         cell5.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
         const div5 = document.createElement("div");
         div5.style = 'min-width: 10rem; max-width: 10rem;'
@@ -657,6 +679,10 @@
         let header = document.createElement("div");
         header.className = 'flex justify-between'
 
+
+        let divLogoWrapper = document.createElement("div");
+        divLogoWrapper.className = 'flex flex-row'
+
         let divLogo = document.createElement("div");
         divLogo.classList.add('text-sm', 'text-dark', 'font-medium', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
 
@@ -667,13 +693,21 @@
         span2.innerText = 'Symphony Tools Extension'
 
         const donate = document.createElement('div')
-        donate.className = 'text-sm text-dark font-medium whitespace-nowrap py-4 px-6 truncate flex items-center text-left'
+        donate.className = 'text-sm text-dark font-medium whitespace-nowrap py-4 truncate flex items-center text-left'
         donate.innerHTML = '<a href="https://www.buymeacoffee.com/dpods" class="text-xs underline font-light" target="_blank">Support this extension</a>'
 
         divLogo.appendChild(span1)
         divLogo.appendChild(span2)
-        header.appendChild(divLogo)
-        header.appendChild(donate)
+
+        divLogoWrapper.appendChild(divLogo)
+        divLogoWrapper.appendChild(donate)
+
+        let divBroker = document.createElement("div");
+        divBroker.classList.add('text-xs', 'text-dark', 'font-medium', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
+        divBroker.innerText = `Broker: ${account.broker}`
+
+        header.appendChild(divLogoWrapper)
+        header.appendChild(divBroker)
 
         const tbody = table.getElementsByTagName('tbody')[0]
         tbody.classList.add('block','bg-sheet','divide-y','divide-divider-light')
@@ -685,6 +719,11 @@
         divOuter.appendChild(divInner)
 
         mainEl.appendChild(divOuter)
+
+        updateTickerLastPercentChanges(account.account_uuid, token)
+        setInterval(() => {
+            updateTickerLastPercentChanges(account.account_uuid, token)
+        }, 15 * 1000)
     }
 
     const getHoldingAllocationsPerSymphony = (holding) => {
@@ -730,7 +769,7 @@
         return table
     }
 
-    const getAccountId = async (token) => {
+    const getAccount = async (token) => {
         const resp = await fetch(
             'https://stagehand-api.composer.trade/api/v1/accounts/list',
             {
@@ -756,7 +795,47 @@
             throw new Error('[Symphony Tools Extension]: Unable to detect account type')
         }
 
-        return account.account_uuid
+        return account
+    }
+
+    async function updateTickerLastPercentChanges(accountId, token) {
+        const resp = await fetch(
+            `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${accountId}/symphony-stats`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        )
+        const data = await resp.json()
+        const percentageChanges = {}
+        for (const symphonyId of Object.keys(data.stats)) {
+            const holdings = data.stats[symphonyId].holdings
+            for (const holding of holdings) {
+                if (percentageChanges[holding.ticker] === undefined) {
+                    percentageChanges[holding.ticker] = holding.last_percent_change ?? '--'
+                }
+            }
+        }
+
+        for (const ticker of Object.keys(percentageChanges)) {
+            const el = document.getElementById(`ste-ticker-${ticker}-percent-change`)
+            const zero = (percentageChanges[ticker] * 100) === 0
+            const positive = (percentageChanges[ticker] * 100) > 0
+            let change = (percentageChanges[ticker] * 100).toFixed(2) + '%'
+            if (zero) {
+                el.innerText = change
+                el.style = 'min-width: 10rem; max-width: 10rem; color: rgb(0, 0, 0);'
+            } else if (positive) {
+                el.innerText = `+${change}`
+                el.style = 'min-width: 10rem; max-width: 10rem; color: rgb(4, 159, 85);'
+            } else {
+                el.innerText = change
+                el.style = 'min-width: 10rem; max-width: 10rem; color: rgb(255, 0, 0);'
+            }
+        }
+
+        console.log('[STE] updated last percent change')
     }
 
     function getElementsByText(str, tag = 'a') {
