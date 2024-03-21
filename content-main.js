@@ -568,40 +568,40 @@
             const cell1 = currentRow.insertCell(1)
             cell1.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div1 = document.createElement("div");
-            div1.classList.add('font-medium', 'cursor-pointer', 'truncate')
+            div1.classList.add('cursor-pointer', 'truncate')
             div1.style = 'min-width: 10rem; max-width: 10rem;'
             div1.innerText = (holding.totalAllocation * 100).toFixed(2) + '%'
             cell1.appendChild(div1)
 
-            const cellPercentChange = currentRow.insertCell(2)
-            cellPercentChange.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
-            const divPercentChange = document.createElement("div");
-            divPercentChange.id = `ste-ticker-${holding.ticker}-percent-change`
-            divPercentChange.classList.add('font-medium', 'cursor-pointer', 'truncate')
-            divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
-            divPercentChange.innerText = '--'
-            cellPercentChange.appendChild(divPercentChange)
+            // const cellPercentChange = currentRow.insertCell(2)
+            // cellPercentChange.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
+            // const divPercentChange = document.createElement("div");
+            // divPercentChange.id = `ste-ticker-${holding.ticker}-percent-change`
+            // divPercentChange.classList.add('cursor-pointer', 'truncate')
+            // divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
+            // divPercentChange.innerText = '--'
+            // cellPercentChange.appendChild(divPercentChange)
 
-            const cell2 = currentRow.insertCell(3)
+            const cell2 = currentRow.insertCell(2)
             cell2.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div2 = document.createElement("div");
-            div2.classList.add('font-medium', 'cursor-pointer', 'truncate')
+            div2.classList.add('cursor-pointer', 'truncate')
             div2.style = 'min-width: 10rem; max-width: 10rem;'
             div2.innerText = holding.symphonies.length
             cell2.appendChild(div2)
 
-            const cell3 = currentRow.insertCell(4)
+            const cell3 = currentRow.insertCell(3)
             cell3.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div3 = document.createElement("div");
-            div3.classList.add('font-medium', 'cursor-pointer', 'truncate')
+            div3.classList.add('cursor-pointer', 'truncate')
             div3.style = 'min-width: 10rem; max-width: 10rem;'
             div3.innerText = (holding.amount).toFixed(2)
             cell3.appendChild(div3)
 
-            const cell4 = currentRow.insertCell(5)
+            const cell4 = currentRow.insertCell(4)
             cell4.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
             const div4 = document.createElement("div");
-            div4.classList.add('font-medium', 'cursor-pointer', 'truncate')
+            div4.classList.add('cursor-pointer', 'truncate')
             div4.style = 'min-width: 10rem; max-width: 10rem;'
             div4.innerText = USDollar.format((holding.value).toFixed(2))
             cell4.appendChild(div4)
@@ -644,28 +644,28 @@
         div2.innerText = "Total Allocation";
         cell2.appendChild(div2)
 
-        const cellPercentChange = row.insertCell(2);
-        cellPercentChange.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
-        const divPercentChange = document.createElement("div");
-        divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
-        divPercentChange.innerText = "Today's % Change";
-        cellPercentChange.appendChild(divPercentChange)
+        // const cellPercentChange = row.insertCell(2);
+        // cellPercentChange.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
+        // const divPercentChange = document.createElement("div");
+        // divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
+        // divPercentChange.innerText = "Today's % Change";
+        // cellPercentChange.appendChild(divPercentChange)
 
-        const cell3 = row.insertCell(3);
+        const cell3 = row.insertCell(2);
         cell3.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
         const div3 = document.createElement("div");
         div3.style = 'min-width: 10rem; max-width: 10rem;'
         div3.innerText = "Symphonies";
         cell3.appendChild(div3)
 
-        const cell4 = row.insertCell(4);
+        const cell4 = row.insertCell(3);
         cell4.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
         const div4 = document.createElement("div");
         div4.style = 'min-width: 10rem; max-width: 10rem;'
         div4.innerText = "Total Quantity";
         cell4.appendChild(div4)
 
-        const cell5 = row.insertCell(5);
+        const cell5 = row.insertCell(4);
         cell5.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
         const div5 = document.createElement("div");
         div5.style = 'min-width: 10rem; max-width: 10rem;'
@@ -720,10 +720,10 @@
 
         mainEl.appendChild(divOuter)
 
-        updateTickerLastPercentChanges(account.account_uuid, token)
-        setInterval(() => {
-            updateTickerLastPercentChanges(account.account_uuid, token)
-        }, 15 * 1000)
+        // updateTickerLastPercentChanges(account.account_uuid, token)
+        // setInterval(() => {
+        //     updateTickerLastPercentChanges(account.account_uuid, token)
+        // }, 15 * 1000)
     }
 
     const getHoldingAllocationsPerSymphony = (holding) => {
@@ -824,7 +824,7 @@
             const positive = (percentageChanges[ticker] * 100) > 0
             let change = (percentageChanges[ticker] * 100).toFixed(2) + '%'
             if (zero) {
-                el.innerText = change
+                el.innerText = `+${change}`
                 el.style = 'min-width: 10rem; max-width: 10rem; color: rgb(0, 0, 0);'
             } else if (positive) {
                 el.innerText = `+${change}`
@@ -834,8 +834,6 @@
                 el.style = 'min-width: 10rem; max-width: 10rem; color: rgb(255, 0, 0);'
             }
         }
-
-        console.log('[STE] updated last percent change')
     }
 
     function getElementsByText(str, tag = 'a') {
