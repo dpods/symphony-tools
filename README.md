@@ -3,10 +3,12 @@ Chrome Extension that provides tools and enhancements to the Composer.trade user
 
 ### Features
 - Symphony Editor
-  - Search and replace for Assets in a Symphony
+  - Search and replace for assets and if/else logic in a Symphony
   - Remove metadata from a Symphony
+  - Copy JSON / EDN
 - Portfolio
   - Aggregate holdings and allocations across all symphonies
+  - Display broker type for account (Alpaca/Apex)
 
 Symphony Editor
 ![Symphony Tools Extension - Symphony Editor](docs/images/symphony-editor.png)
@@ -21,6 +23,12 @@ Aggregate Holdings
 2. Unzip the contents 
 3. In Chrome, navigate to [chrome://extensions](chrome://extensions/) in the URL bar 
 4. Click the **Load unpacked** button and select the folder where the unzipped contents are.
+
+### Troubleshooting
+
+Failed to load extension
+
+**Manifest file is missing or unreadable** - Make sure you've unzipped the file. After clicking "Load unpacked" on the extensions page, navigate to the unzipped folder and click "Select"
 
 ### Donate
 
