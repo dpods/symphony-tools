@@ -1,7 +1,14 @@
 {
-  "name": "Symphony Tools Extension",
-  "version": "2.0.0",
-  "scripts": {},
-  "devDependencies": {},
-  "dependencies": {}
+  "name": "symphony-tools-extension",
+  "version": "2.3.0",
+  "type": "module",
+  "scripts": {
+    "build:major": "node bin/build.js major",
+    "build:minor": "node bin/build.js minor",
+    "build:patch": "node bin/build.js patch"
+  },
+  "devDependencies": {
+    "adm-zip": "^0.5.12",
+    "semver": "^7.6.0"
+  }
 }
