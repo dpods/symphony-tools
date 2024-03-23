@@ -24,7 +24,9 @@
         "https://app.composer.trade/symphony/*"
       ],
       "js": [
-        "content-main.js"
+        "common.js",
+        "portfolio.js",
+        "symphony.js"
       ],
       "world": "MAIN"
     }

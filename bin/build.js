@@ -51,6 +51,7 @@ const createGitTag = async (version) => {
     await execPromise(`git tag -a v${version} -m "v${version}"`);
     console.log(`tagged commit with v${version}`);
     await execPromise(`git push`);
+    await execPromise(`git push --tags`);
     console.log('pushed commit');
 }
 
