@@ -22,7 +22,11 @@ Aggregate Holdings
     https://github.com/dpods/symphony-tools/releases/latest
 2. Unzip the contents 
 3. In Chrome, navigate to [chrome://extensions](chrome://extensions/) in the URL bar 
-4. Click the **Load unpacked** button and select the folder where the unzipped contents are.
+4. Click the **Load unpacked** button and select the `src` folder (where the `manifest.json` file is).
+5. Where to find the widgets
+   1. In the Symphony editor, the widget should appear on the sidebar under the Watch/Share buttons. 
+   2. In the portfolio view, the widget should appear at the bottom of the page under all your live symphonies
+
 
 ### Troubleshooting
 
