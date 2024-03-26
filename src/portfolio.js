@@ -11,6 +11,10 @@
     }
 
     function renderPortfolioWidget(mainEl) {
+        if (window.location.pathname !== '/portfolio') {
+            return
+        }
+
         const accountButton = getAccountButton()
         let accountType = getAccountType(accountButton.innerText)
 
@@ -106,13 +110,10 @@
 
     const renderTable = (mainEl, account, holdings, token) => {
         const widgetId = 'ste-aggregate-holdings'
+        const widget = document.getElementById(widgetId);
 
-        if (holdings.length === 0) {
-            const widget = document.getElementById(widgetId);
-            if (widget) {
-                widget.remove();
-            }
-            return
+        if (widget) {
+            widget.remove();
         }
 
         const table = document.createElement("table");
