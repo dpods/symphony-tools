@@ -1,6 +1,6 @@
 {
   "name": "symphony-tools-extension",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "type": "module",
   "scripts": {
     "build:major": "node bin/build.js major",

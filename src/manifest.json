@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Symphony Tools Extension",
   "description": "Utility extension that makes working with Composer Symphonies easier",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
