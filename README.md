@@ -10,14 +10,25 @@ Chrome Extension that provides tools and enhancements to the Composer.trade user
   - Aggregate holdings and allocations across all symphonies
   - Display broker type for account (Alpaca/Apex)
 
-Symphony Editor
-![Symphony Tools Extension - Symphony Editor](docs/images/symphony-editor.png)
-
 Aggregate Holdings
 ![Symphony Tools Extension - Portfolio](docs/images/portfolio.png)
 
+Symphony Editor
+![Symphony Tools Extension - Symphony Editor](docs/images/symphony-editor.png)
+
 ### Installation
 
+#### Chrome Web Store
+The easiest way to install the extension is through the Chrome Web Store.
+
+1. Go to https://chromewebstore.google.com/detail/symphony-tools-extension/gbmghoigiaomcfnnoijngbdnglpifbkk
+2. Click "Add to Chrome"
+3. If you have the composer site open in your browser, refresh the page so the widget can load. 
+4. Where to find the widgets
+    1. In the Symphony editor, the widget should appear on the sidebar under the Watch/Share buttons.
+    2. In the portfolio view, the widget should appear at the bottom of the page under all your live symphonies
+
+#### Manual Installation
 1. Go to the latest release and download the .zip file
     https://github.com/dpods/symphony-tools/releases/latest
 2. Unzip the contents 
