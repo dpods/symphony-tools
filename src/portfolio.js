@@ -67,7 +67,7 @@ function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue) {
                 percentChange:(currentValue - dailyChanges.series[index]) / dailyChanges.series[index]
             });
         }
-        
+
         // else if (symphonyDeploys[dateString]) {
         //     const currentDayDeployAmount = symphonyDeploys[dateString]?.cash_change;
         //     // this may end up being very inaccurate
@@ -117,7 +117,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
             change :
             acc
         ), symphony.dailyChanges.percentageReturns[0]),
-        runningDays: symphony.dailyChanges.series.length,
+        tradeDays: symphony.dailyChanges.series.length,
         totalReturn: symphony.dailyChanges.percentageReturns.reduce((acc, change)=> (
             acc + change.percentChange
         ),0), //(totalDeployedCash - symphony.value ) / symphony.value,
@@ -137,8 +137,8 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
 (() => {
 
     const extraColumns = {
-        keys:['Best Day', 'Worst Day', 'Running Days', 'Total Return', 'Average Daily Return'],
-        values: ['bestDay', 'worstDay', 'runningDays', 'totalReturn', 'averageReturn'],
+        keys:['Best Day', 'Worst Day', 'Trade Days', 'Total Return', 'Average Trade Days Return'],
+        values: ['bestDay', 'worstDay', 'tradeDays', 'totalReturn', 'averageReturn'],
         percentages: ['bestDay', 'worstDay', 'totalReturn', 'averageReturn']
     }
 
@@ -197,7 +197,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
     }
 
 
-    
+
     function extendSymphonyStatsRow(symphony) {
         const mainTableBody = document.querySelectorAll('table.min-w-full tbody')[0]
         const rows = mainTableBody.querySelectorAll('tr');
@@ -218,7 +218,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
                     };
                     const newTd = document.createElement('td');
                     newTd.className = 'text-sm text-dark whitespace-nowrap py-4 px-6 truncate flex items-center';
-                    newTd.style = 'min-width: 10rem; max-width: 10rem;';
+                    newTd.style = 'min-width: 10rem;';
                     newTd.textContent = value;
                     row.appendChild(newTd);
                 });
@@ -237,7 +237,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
             const newTh = document.createElement('th');
             newTh.scope = 'col';
             newTh.className = 'text-xs px-6 py-2 text-dark-soft text-left font-normal whitespace-nowrap align-bottom';
-            newTh.style = 'min-width: 10rem; max-width: 10rem;';
+            newTh.style = 'min-width: 10rem;';
             newTh.textContent = extraColumns.keys[i];
             thead.appendChild(newTh);
         }
@@ -296,11 +296,11 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
 
         const cacheKey = 'symphonyPerformance-'+symphonyId;
         const cachedData = localStorage.getItem(cacheKey);
-    
+
         if (cachedData) {
             const { data, timestamp } = JSON.parse(cachedData);
             const cacheTimeoutAgo = Date.now() - cacheTimeout;
-    
+
             if (timestamp > cacheTimeoutAgo) {
                 return data;
             }
@@ -715,7 +715,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
             }
         }
     }
-    
+
     async function getAccount (token) {
         const resp = await fetch(
             'https://stagehand-api.composer.trade/api/v1/accounts/list',
