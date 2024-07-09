@@ -22,7 +22,7 @@ function getDeploysForSymphony(symphony, accountDeploys) {
     }, {});
 }
 
-function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue) {
+function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue, calculationKey = 'series' /*['series', 'deposit_adjusted_series']*/) {
     let deploymentIndexToAccountFor = 0;
     const sortedDeployments = Object.values(symphonyDeploys).sort((a,b) => new Date(a.created_at) < new Date(b.created_at) ? -1 : 1);
 
@@ -34,25 +34,29 @@ function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue) {
             deploymentIndexToAccountFor ++;
             acc.push({
                 dateString,
-                percentChange:(dailyChanges.series[index] - firstDeployAmount) / firstDeployAmount
+                percentChange:(dailyChanges[calculationKey][index] - firstDeployAmount) / firstDeployAmount
             });
-        } else if (sortedDeployments[deploymentIndexToAccountFor] && isWithinPercentageRange(
-            dailyChanges.series[index],
-            dailyChanges.series[index-1],
-            sortedDeployments[deploymentIndexToAccountFor].cash_change
-        )) { // dailyChanges.series[index] has changed by the deploy amount give or take 5%
+        } else if (
+            calculationKey === 'series' &&
+            sortedDeployments[deploymentIndexToAccountFor] &&
+            isWithinPercentageRange(
+                dailyChanges[calculationKey][index],
+                dailyChanges[calculationKey][index-1],
+                sortedDeployments[deploymentIndexToAccountFor].cash_change
+            )
+        ) { // dailyChanges[calculationKey][index] has changed by the deploy amount give or take 5%
             // this is a guess that the deploy happened on this day
             const currentDayDeployAmount = sortedDeployments[deploymentIndexToAccountFor].cash_change;
-            const lastDayAmount = dailyChanges.series[index - 1] + currentDayDeployAmount;
+            const lastDayAmount = dailyChanges[calculationKey][index - 1] + currentDayDeployAmount;
             acc.push({
                 dateString,
-                percentChange:(dailyChanges.series[index] - lastDayAmount) / lastDayAmount
+                percentChange:(dailyChanges[calculationKey][index] - lastDayAmount) / lastDayAmount
             });
             deploymentIndexToAccountFor ++;
         } else {
             acc.push({
                 dateString,
-                percentChange:(dailyChanges.series[index] - dailyChanges.series[index - 1]) / dailyChanges.series[index - 1]
+                percentChange:(dailyChanges[calculationKey][index] - dailyChanges[calculationKey][index - 1]) / dailyChanges[calculationKey][index - 1]
             });
         }
 
@@ -64,6 +68,8 @@ function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue) {
             // this will change pretty frequently
             acc.push({
                 dateString: (new Date()).toDateString(),
+                // if you are using the deposit_adjusted_series key then you should use the last value in the series
+                // deposit_adjusted_series is like some sort of percentage adjusted series
                 percentChange:(currentValue - dailyChanges.series[index]) / dailyChanges.series[index]
             });
         }
@@ -72,15 +78,15 @@ function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue) {
         //     const currentDayDeployAmount = symphonyDeploys[dateString]?.cash_change;
         //     // this may end up being very inaccurate
         //     // some of the day might have had the new deployed capital and some might not so calculating the growth could be very incorrect
-        //     const lastDayAmount = dailyChanges.series[index - 1] + currentDayDeployAmount;
+        //     const lastDayAmount = dailyChanges[calculationKey][index - 1] + currentDayDeployAmount;
         //     acc.push({
         //         dateString,
-        //         percentChange:(dailyChanges.series[index] - lastDayAmount) / lastDayAmount
+        //         percentChange:(dailyChanges[calculationKey][index] - lastDayAmount) / lastDayAmount
         //     });
         // } else {
         //     acc.push({
         //         dateString,
-        //         percentChange:(dailyChanges.series[index] - dailyChanges.series[index - 1]) / dailyChanges.series[index - 1]
+        //         percentChange:(dailyChanges[calculationKey][index] - dailyChanges[calculationKey][index - 1]) / dailyChanges[calculationKey][index - 1]
         //     });
         // }
         return acc;
@@ -100,11 +106,9 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
 
     const symphonyDeploys = getDeploysForSymphony(symphony, accountDeploys);
 
-    // const totalDeployedCash = Object.values(symphonyDeploys).reduce((acc, deploy) => (
-    //     deploy.cash_change + acc
-    // ), 0)
-
     buildSymphonyPercentages(symphony, symphonyDeploys);
+
+    const winDays = symphony.dailyChanges.percentageReturns.filter((a)=> a.percentChange > 0).length;
 
     symphony.addedStats = {
         bestDay: symphony.dailyChanges.percentageReturns.reduce((acc, change) => (
@@ -117,13 +121,16 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
             change :
             acc
         ), symphony.dailyChanges.percentageReturns[0]),
-        tradeDays: symphony.dailyChanges.series.length,
+        tradeDays: symphony.dailyChanges.percentageReturns.length,
         totalReturn: symphony.dailyChanges.percentageReturns.reduce((acc, change)=> (
             acc + change.percentChange
         ),0), //(totalDeployedCash - symphony.value ) / symphony.value,
         averageReturn: symphony.dailyChanges.percentageReturns.reduce((acc, change) => (
             change.percentChange + acc
-        ), 0) / symphony.dailyChanges.percentageReturns.length
+        ), 0) / symphony.dailyChanges.percentageReturns.length,
+        winDays,
+        lossDays: symphony.dailyChanges.percentageReturns.filter((a)=> a.percentChange < 0).length,
+        winRate: winDays/symphony.dailyChanges.percentageReturns.length
     };
 };
 
@@ -137,12 +144,15 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
 (() => {
 
     const extraColumns = {
-        keys:['Best Day', 'Worst Day', 'Trade Days', 'Total Return', 'Average Trade Days Return'],
-        values: ['bestDay', 'worstDay', 'tradeDays', 'totalReturn', 'averageReturn'],
-        percentages: ['bestDay', 'worstDay', 'totalReturn', 'averageReturn']
+        keys:['Best Day', 'Worst Day', 'Trade Days', 'Total Return', 'Average Trade Days Return','Win Days' ,'Loss Days', 'Win Rate'],
+        values: ['bestDay', 'worstDay', 'tradeDays', 'totalReturn', 'averageReturn', 'winDays', 'lossDays', 'winRate'],
+        percentages: ['bestDay', 'worstDay', 'totalReturn', 'averageReturn', 'winRate']
     }
 
     const performanceData = {};
+    window.symphonyTools = {
+        performanceData
+    }
 
     let portfolioWidgetRendered = false;
     let symphonyPerformanceSyncActive = false;
@@ -218,7 +228,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
                     };
                     const newTd = document.createElement('td');
                     newTd.className = 'text-sm text-dark whitespace-nowrap py-4 px-6 truncate flex items-center';
-                    newTd.style = 'min-width: 10rem;';
+                    newTd.style = 'min-width: 10rem; max-width: 10rem;';
                     newTd.textContent = value;
                     row.appendChild(newTd);
                 });
@@ -237,7 +247,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
             const newTh = document.createElement('th');
             newTh.scope = 'col';
             newTh.className = 'text-xs px-6 py-2 text-dark-soft text-left font-normal whitespace-nowrap align-bottom';
-            newTh.style = 'min-width: 10rem;';
+            newTh.style = 'min-width: 10rem; max-width: 10rem;';
             newTh.textContent = extraColumns.keys[i];
             thead.appendChild(newTh);
         }
@@ -271,7 +281,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
     }
 
     async function getSymphonyPerformanceInfo() {
-        const halfDay = 12 * 60 * 60 * 1000; // this should only update once per day ish base on a normal user's usage. It could happen multiple times if multiple windows are open. or if the user is refreshing every 12 hours.
+        const TwoHours = 2 * 60 * 60 * 1000; // this should only update once per day ish base on a normal user's usage. It could happen multiple times if multiple windows are open. or if the user is refreshing every 12 hours.
         const accountDeploys = await getAccountDeploys()
         const symphonyStats = await getSymphonyStatsMeta()
 
@@ -280,7 +290,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
 
 
         for (const symphony of symphonyStats.symphonies) {
-            symphony.dailyChanges = await getSymphonyDailyChange(symphony.id, halfDay, 500)
+            symphony.dailyChanges = await getSymphonyDailyChange(symphony.id, TwoHours, 200)
             addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys)
             extendSymphonyStatsRow(symphony)
             // to make stats show up faster we could do dom updates right here.
@@ -306,7 +316,7 @@ function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
             }
         }
 
-        await new Promise(resolve => setTimeout(resolve, timeToWaitBeforeCall)); // 500ms delay this is 2 calls per second. we may need to decrease this for rate limiting
+        await new Promise(resolve => setTimeout(resolve, timeToWaitBeforeCall)); // timeToWaitBeforeCall-ms delay this is 2 calls per second. we may need to decrease this for rate limiting
 
         const {
             token,
