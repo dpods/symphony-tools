@@ -22,18 +22,16 @@ function getDeploysForSymphony(symphony, accountDeploys) {
     }, {});
 }
 
-function buildReturnsArray(dailyChanges, symphonyDeploys) {
+function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue) {
     let deploymentIndexToAccountFor = 0;
     const sortedDeployments = Object.values(symphonyDeploys).sort((a,b) => new Date(a.created_at) < new Date(b.created_at) ? -1 : 1);
 
     return dailyChanges.epoch_ms.reduce((acc, change, index) => {
         // for the first item we should get the first deploy which should match the first date in the dailyChanges epoch_ms
-        // with that we should get the percentage change between the first deploy and the first dailyChanges.series item
         const dateString = (new Date(change)).toDateString();
         if (index === 0) {
             const firstDeployAmount = sortedDeployments[0].cash_change;
             deploymentIndexToAccountFor ++;
-            // const firstDeployAmount = symphonyDeploys[dateString]?.cash_change;
             acc.push({
                 dateString,
                 percentChange:(dailyChanges.series[index] - firstDeployAmount) / firstDeployAmount
@@ -55,6 +53,18 @@ function buildReturnsArray(dailyChanges, symphonyDeploys) {
             acc.push({
                 dateString,
                 percentChange:(dailyChanges.series[index] - dailyChanges.series[index - 1]) / dailyChanges.series[index - 1]
+            });
+        }
+
+        if (
+            dailyChanges.epoch_ms.length - 1 === index && // last day
+            (new Date(dailyChanges.epoch_ms)).toDateString() !== (new Date()).toDateString() // last day is not today
+        ) {
+            // add a new point for today
+            // this will change pretty frequently
+            acc.push({
+                dateString: (new Date()).toDateString(),
+                percentChange:(currentValue - dailyChanges.series[index]) / dailyChanges.series[index]
             });
         }
         
@@ -80,7 +90,8 @@ function buildReturnsArray(dailyChanges, symphonyDeploys) {
 function buildSymphonyPercentages(symphony, symphonyDeploys) {
     symphony.dailyChanges.percentageReturns = buildReturnsArray(
         symphony.dailyChanges,
-        symphonyDeploys
+        symphonyDeploys,
+        symphony.value
     )
 }
 
