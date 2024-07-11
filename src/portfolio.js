@@ -1,14 +1,258 @@
+
+function isWithinPercentageRange(numberToCheck, previousValue, valueChange, percentageRange = 5) {
+    // Calculate the allowed range
+    const valueChangeLowerBound = Math.abs(valueChange * (1 - percentageRange / 100));
+    const valueChangeUpperBound = Math.abs(valueChange * (1 + percentageRange / 100));
+
+    // Calculate the actual change
+    const actualChange = Math.abs(numberToCheck - previousValue);
+
+    // Check if numberToCheck is within the range
+    const isWithinRange = actualChange >= valueChangeLowerBound && actualChange <= valueChangeUpperBound;
+
+    return isWithinRange;
+}
+
+function getDeploysForSymphony(symphony, accountDeploys) {
+    return accountDeploys.filter(deploy => (
+        deploy.symphony_id === symphony.id
+    )).reduce((acc, deploy) => {
+        acc[(new Date(deploy.created_at)).toDateString()] = deploy;
+        return acc;
+    }, {});
+}
+
+function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue, calculationKey = 'series' /*['series', 'deposit_adjusted_series']*/) {
+    let deploymentIndexToAccountFor = 0;
+    const sortedDeployments = Object.values(symphonyDeploys).sort((a,b) => new Date(a.created_at) < new Date(b.created_at) ? -1 : 1);
+
+    return dailyChanges.epoch_ms.reduce((acc, change, index) => {
+        // for the first item we should get the first deploy which should match the first date in the dailyChanges epoch_ms
+        const dateString = (new Date(change)).toDateString();
+        if (index === 0) {
+            const firstDeployAmount = sortedDeployments[0].cash_change;
+            deploymentIndexToAccountFor ++;
+            acc.push({
+                dateString,
+                percentChange:(dailyChanges[calculationKey][index] - firstDeployAmount) / firstDeployAmount
+            });
+        } else if (
+            calculationKey === 'series' &&
+            sortedDeployments[deploymentIndexToAccountFor] &&
+            isWithinPercentageRange(
+                dailyChanges[calculationKey][index],
+                dailyChanges[calculationKey][index-1],
+                sortedDeployments[deploymentIndexToAccountFor].cash_change
+            )
+        ) { // dailyChanges[calculationKey][index] has changed by the deploy amount give or take 5%
+            // this is a guess that the deploy happened on this day
+            const currentDayDeployAmount = sortedDeployments[deploymentIndexToAccountFor].cash_change;
+            const lastDayAmount = dailyChanges[calculationKey][index - 1] + currentDayDeployAmount;
+            acc.push({
+                dateString,
+                percentChange:(dailyChanges[calculationKey][index] - lastDayAmount) / lastDayAmount
+            });
+            deploymentIndexToAccountFor ++;
+        } else {
+            acc.push({
+                dateString,
+                percentChange:(dailyChanges[calculationKey][index] - dailyChanges[calculationKey][index - 1]) / dailyChanges[calculationKey][index - 1]
+            });
+        }
+
+        if (
+            dailyChanges.epoch_ms.length - 1 === index && // last day
+            (new Date(dailyChanges.epoch_ms)).toDateString() !== (new Date()).toDateString() // last day is not today
+        ) {
+            // add a new point for today
+            // this will change pretty frequently
+            acc.push({
+                dateString: (new Date()).toDateString(),
+                // if you are using the deposit_adjusted_series key then you should use the last value in the series
+                // deposit_adjusted_series is like some sort of percentage adjusted series
+                percentChange:(currentValue - dailyChanges.series[index]) / dailyChanges.series[index]
+            });
+        }
+
+        // else if (symphonyDeploys[dateString]) {
+        //     const currentDayDeployAmount = symphonyDeploys[dateString]?.cash_change;
+        //     // this may end up being very inaccurate
+        //     // some of the day might have had the new deployed capital and some might not so calculating the growth could be very incorrect
+        //     const lastDayAmount = dailyChanges[calculationKey][index - 1] + currentDayDeployAmount;
+        //     acc.push({
+        //         dateString,
+        //         percentChange:(dailyChanges[calculationKey][index] - lastDayAmount) / lastDayAmount
+        //     });
+        // } else {
+        //     acc.push({
+        //         dateString,
+        //         percentChange:(dailyChanges[calculationKey][index] - dailyChanges[calculationKey][index - 1]) / dailyChanges[calculationKey][index - 1]
+        //     });
+        // }
+        return acc;
+    }, []);
+}
+
+function buildSymphonyPercentages(symphony, symphonyDeploys) {
+    symphony.dailyChanges.percentageReturns = buildReturnsArray(
+        symphony.dailyChanges,
+        symphonyDeploys,
+        symphony.value
+    )
+}
+
+
+function addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys) {
+
+    const symphonyDeploys = getDeploysForSymphony(symphony, accountDeploys);
+
+    buildSymphonyPercentages(symphony, symphonyDeploys);
+
+    const winDays = symphony.dailyChanges.percentageReturns.filter((a)=> a.percentChange > 0).length;
+
+    symphony.addedStats = {
+        bestDay: symphony.dailyChanges.percentageReturns.reduce((acc, change) => (
+            change.percentChange > acc.percentChange ?
+            change :
+            acc
+        ), symphony.dailyChanges.percentageReturns[0]),
+        worstDay: symphony.dailyChanges.percentageReturns.reduce((acc, change) => (
+            change.percentChange < acc.percentChange ?
+            change :
+            acc
+        ), symphony.dailyChanges.percentageReturns[0]),
+        tradeDays: symphony.dailyChanges.percentageReturns.length,
+        totalReturn: symphony.dailyChanges.percentageReturns.reduce((acc, change)=> (
+            acc + change.percentChange
+        ),0), //(totalDeployedCash - symphony.value ) / symphony.value,
+        averageReturn: symphony.dailyChanges.percentageReturns.reduce((acc, change) => (
+            change.percentChange + acc
+        ), 0) / symphony.dailyChanges.percentageReturns.length,
+        winDays,
+        lossDays: symphony.dailyChanges.percentageReturns.filter((a)=> a.percentChange < 0).length,
+        winRate: winDays/symphony.dailyChanges.percentageReturns.length
+    };
+};
+
+
+
+
+
+
+
+
 (() => {
-    const initPortfolioWidget = () => {
-        const observer = new MutationObserver(function (mutations, mutationInstance) {
+
+    const extraColumns = {
+        keys:['Best Day', 'Worst Day', 'Trade Days', 'Total Return', 'Average Trade Days Return','Win Days' ,'Loss Days', 'Win Rate'],
+        values: ['bestDay', 'worstDay', 'tradeDays', 'totalReturn', 'averageReturn', 'winDays', 'lossDays', 'winRate'],
+        percentages: ['bestDay', 'worstDay', 'totalReturn', 'averageReturn', 'winRate']
+    }
+
+    const performanceData = {};
+    window.symphonyTools = {
+        performanceData
+    }
+
+    let portfolioWidgetRendered = false;
+    let symphonyPerformanceSyncActive = false;
+    const getTokenAndAccount = getTokenAndAccountUtil()
+
+    const initPortfolio = async () => {
+        const observer = new MutationObserver(async function (mutations, mutationInstance) {
             const mainEl = document.getElementsByTagName('main')[0]
+            const mainTable = document.querySelectorAll('table.min-w-full')[0]
+            const mainTableContent = document.querySelectorAll('table.min-w-full td')[0]
             if (mainEl) {
+                await getTokenAndAccount(); // this is to cache the token and account
+            }
+            if (mainEl && !portfolioWidgetRendered) {
+                portfolioWidgetRendered = true;
                 renderPortfolioWidget(mainEl);
+            }
+            if (mainTableContent && !symphonyPerformanceSyncActive) {
+                symphonyPerformanceSyncActive = true;
+                startSymphonyPerformanceSync(mainTable);
+            }
+            if (portfolioWidgetRendered && symphonyPerformanceSyncActive) {
                 mutationInstance.disconnect();
             }
         });
         observer.observe(document, { childList: true, subtree: true});
     }
+
+    const startSymphonyPerformanceSync = async (mainTable) => {
+        const mainTableBody = mainTable.querySelectorAll('tbody')[0]
+        addExtraColumns(mainTable, extraColumns);
+        getSymphonyPerformanceInfo().then((performanceData)=>{
+            console.log('all symphony stats added', performanceData)
+        })
+
+        function delayDomUpdate() {
+            performanceData.symphonyStats.symphonies.forEach((symphony) => {
+                if (symphony.addedStats) {
+                    extendSymphonyStatsRow(symphony)
+                }
+            });
+        }
+
+        let timeout;
+        const observer = new MutationObserver(async function (mutations, mutationInstance) {
+            // run extendSymphonyStatsRow for each symphony but only at a max of once per second using a timeout to make sure it runs at least once per second
+            clearTimeout(timeout);
+            timeout = setTimeout(delayDomUpdate, 2000);
+            console.log('observer triggered')
+        });
+        observer.observe(mainTableBody, { childList: true, subtree: true});
+    }
+
+
+
+    function extendSymphonyStatsRow(symphony) {
+        const mainTableBody = document.querySelectorAll('table.min-w-full tbody')[0]
+        const rows = mainTableBody.querySelectorAll('tr');
+
+
+        for (row of rows) {
+            const nameTd = row.querySelector('td:first-child');
+            const nameText = nameTd.textContent.trim();
+            if (
+                nameText == symphony.name &&
+                row.children.length < 10 // make sure we only add the extra columns once
+            ) {
+                row.lastChild.remove()
+                extraColumns.values.forEach((key) => {
+                    let value = (symphony.addedStats[key]?.percentChange || symphony.addedStats[key])
+                    if (extraColumns.percentages.includes(key)) {
+                        value = (value * 100).toFixed(2) + '%';
+                    };
+                    const newTd = document.createElement('td');
+                    newTd.className = 'text-sm text-dark whitespace-nowrap py-4 px-6 truncate flex items-center';
+                    newTd.style = 'min-width: 10rem; max-width: 10rem;';
+                    newTd.textContent = value;
+                    row.appendChild(newTd);
+                });
+                const newTd = document.createElement('td');
+                newTd.className = 'w-full';
+                row.appendChild(newTd)
+                break;
+            }
+        }
+    }
+
+    function addExtraColumns(mainTable, extraColumns) {
+        for (let i = 0; i < extraColumns.keys.length; i++) {
+            // Add the new headers
+            const thead = mainTable.querySelector('thead tr');
+            const newTh = document.createElement('th');
+            newTh.scope = 'col';
+            newTh.className = 'text-xs px-6 py-2 text-dark-soft text-left font-normal whitespace-nowrap align-bottom';
+            newTh.style = 'min-width: 10rem; max-width: 10rem;';
+            newTh.textContent = extraColumns.keys[i];
+            thead.appendChild(newTh);
+        }
+    }
+
 
     function renderPortfolioWidget(mainEl) {
         if (window.location.pathname !== '/portfolio') {
@@ -18,8 +262,8 @@
         const accountButton = getAccountButton()
         let accountType = getAccountType(accountButton.innerText)
 
-        getAggregatedLiveHoldings(accountType).then(({account, holdings, token}) => {
-            renderTable(mainEl, account, holdings, token)
+        getAggregatedLiveHoldings(accountType).then(({account, holdings}) => {
+            renderTable(mainEl, account, holdings)
         })
 
         const observer = new MutationObserver(function(mutations) {
@@ -27,19 +271,124 @@
             if (newAccountType !== accountType) {
                 debug(`Detected new account type ${newAccountType}. Re-rendering widget`)
                 accountType = newAccountType
-                getAggregatedLiveHoldings(accountType).then(({account, holdings, token}) => {
-                    renderTable(mainEl, account, holdings, token)
+
+                getAggregatedLiveHoldings(accountType).then(({account, holdings}) => {
+                    renderTable(mainEl, account, holdings)
                 })
             }
         });
         observer.observe(mainEl, { childList: true, subtree: true });
     }
 
-    const getAggregatedLiveHoldings = async (accountType) => {
-        const token = await cli.getTemporaryToken()
-        const account = await getAccount(token)
+    async function getSymphonyPerformanceInfo() {
+        const TwoHours = 2 * 60 * 60 * 1000; // this should only update once per day ish base on a normal user's usage. It could happen multiple times if multiple windows are open. or if the user is refreshing every 12 hours.
+        const accountDeploys = await getAccountDeploys()
+        const symphonyStats = await getSymphonyStatsMeta()
+
+        performanceData.accountDeploys = accountDeploys
+        performanceData.symphonyStats = symphonyStats
+
+
+        for (const symphony of symphonyStats.symphonies) {
+            symphony.dailyChanges = await getSymphonyDailyChange(symphony.id, TwoHours, 200)
+            addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys)
+            extendSymphonyStatsRow(symphony)
+            // to make stats show up faster we could do dom updates right here.
+        }
+
+        return {
+            accountDeploys,
+            symphonyStats
+        }
+    }
+
+    async function getSymphonyDailyChange(symphonyId, cacheTimeout = 0, timeToWaitBeforeCall = 0) {
+
+        const cacheKey = 'symphonyPerformance-'+symphonyId;
+        const cachedData = localStorage.getItem(cacheKey);
+
+        if (cachedData) {
+            const { data, timestamp } = JSON.parse(cachedData);
+            const cacheTimeoutAgo = Date.now() - cacheTimeout;
+
+            if (timestamp > cacheTimeoutAgo) {
+                return data;
+            }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, timeToWaitBeforeCall)); // timeToWaitBeforeCall-ms delay this is 2 calls per second. we may need to decrease this for rate limiting
+
+        const {
+            token,
+            account
+        } = await getTokenAndAccount()
+
         const response = await fetch(
-            `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${account.account_uuid}/symphony-stats-meta`,
+            `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${account.account_uuid}/symphonies/${symphonyId}`, // symphony value over time on each day
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        )
+
+        if (response.status !== 200) {
+            log(`Cannot load extension. symphonies/${symphonyId} endpoint returned a ${response.status} error code.`)
+            const holdings = []
+            return {
+                account,
+                holdings,
+                token
+            }
+        }
+
+        const symphonyStats = await response.json()
+
+        localStorage.setItem(cacheKey, JSON.stringify({
+            data: symphonyStats,
+            timestamp: Date.now()
+        }));
+
+        return symphonyStats
+    }
+
+    async function getAccountDeploys(status = 'SUCCEEDED') {
+        const {
+            token,
+            account
+        } = await getTokenAndAccount()
+
+        const response = await fetch(
+            `https://trading-api.composer.trade/api/v1/deploy/accounts/${account.account_uuid}/deploys?status=${status}`, // all user initiated symphony cash allocation changes
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        )
+
+        if (response.status !== 200) {
+            log(`Cannot load extension. deploys endpoint returned a ${response.status} error code.`)
+            const holdings = []
+            return {
+                account,
+                holdings,
+                token
+            }
+        }
+
+        const symphonyStats = await response.json()
+        return symphonyStats?.deploys
+    }
+
+    async function getSymphonyStatsMeta() {
+        const {
+            token,
+            account
+        } = await getTokenAndAccount()
+
+        const response = await fetch(
+            `https://stagehand-api.composer.trade/api/v1/portfolio/accounts/${account.account_uuid}/symphony-stats-meta`, // all current symphony info
             {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -52,12 +401,18 @@
             const holdings = []
             return {
                 account,
-                holdings,
-                token
+                holdings
             }
         }
 
         const symphonyStats = await response.json()
+        return symphonyStats
+    }
+
+    const getAggregatedLiveHoldings = async (accountType) => {
+
+        const {account} = await getTokenAndAccount()
+        const symphonyStats = await getSymphonyStatsMeta()
 
         const aggregateHoldings = {}
         let totalValue = 0
@@ -103,12 +458,11 @@
 
         return {
             account,
-            holdings,
-            token
+            holdings
         }
     }
 
-    const renderTable = (mainEl, account, holdings, token) => {
+    const renderTable = (mainEl, account, holdings) => {
         const widgetId = 'ste-aggregate-holdings'
         const widget = document.getElementById(widgetId);
 
@@ -349,7 +703,30 @@
         return table
     }
 
-    const getAccount = async (token) => {
+    function getTokenAndAccountUtil() {
+        let lastAuthRequest;
+        let token;
+        let account;
+        return async function getTokenAndAccount() {
+            // if last request was less than 20 minutes ago, return the cached token and account
+            if (lastAuthRequest && Date.now() - lastAuthRequest < 20 * 60 * 1000) {
+                return {
+                    token,
+                    account
+                };
+            } else {
+                token = await cli.getTemporaryToken();
+                account = await getAccount(token);
+                lastAuthRequest = Date.now();
+                return {
+                    token,
+                    account
+                };
+            }
+        }
+    }
+
+    async function getAccount (token) {
         const resp = await fetch(
             'https://stagehand-api.composer.trade/api/v1/accounts/list',
             {
@@ -442,12 +819,12 @@
     }
 
     if (window.location.pathname === '/portfolio') {
-        initPortfolioWidget()
+        initPortfolio()
     }
 
     window.navigation.addEventListener("navigate", (event) => {
         if (event.destination.url === 'https://app.composer.trade/portfolio') {
-            initPortfolioWidget()
+            initPortfolio()
         }
     })
 })()
