@@ -99,7 +99,7 @@
         wrapper.classList.add('rounded','flex','border','border-asset-border','shadow-sm','bg-panel-bg','divide-x','divide-solid','divide-asset-border')
 
         let button = document.createElement('button')
-        button.classList.add('w-full','text-sm','font-light','flex','items-center','justify-center','py-2','shadow-inner','transition','focus:outline-none','leading-none','select-none','rounded','text-dark-soft','bg-background')
+        button.classList.add('w-full','text-sm','font-light','flex','items-center','justify-center','py-2','shadow-inner','transition','focus:outline-none','leading-none','select-none','rounded','text-dark','bg-white','hover:bg-tab-light');
 
         let span = document.createElement('span')
         span.classList.add('flex','items-cente','space-x-2')
@@ -120,6 +120,24 @@
         return wrapper
     }
 
+    const setButtonEnabled = (buttonElement, isEnabled) => {
+        if (isEnabled) {
+            buttonElement.classList.remove('text-dark-soft');
+            buttonElement.classList.add('text-dark');
+            buttonElement.classList.remove('bg-background');
+            buttonElement.classList.add('bg-white');
+            buttonElement.classList.remove('hover:bg-tab-light');
+            buttonElement.disabled = false;
+        } else {
+            buttonElement.classList.add('text-dark-soft');
+            buttonElement.classList.remove('text-dark');
+            buttonElement.classList.add('bg-background');
+            buttonElement.classList.remove('bg-white');
+            buttonElement.classList.add('hover:bg-tab-light');
+            buttonElement.disabled = true;
+        }
+    }
+
     const findAndReplaceForm = () => {
         const findInput = () => {
             let wrapper = document.createElement('div')
@@ -137,6 +155,11 @@
             input.type = "text";
             input.id = 'find'
             input.className = 'cursor-default w-full focus:outline-none text-sm bg-white rounded transition border border-input-border border p-1'
+
+            input.addEventListener('keyup', (e) => {
+                const replaceButton = document.querySelector('#ste-widget #findAndReplaceBtn');
+                setButtonEnabled(replaceButton, e.target.value.trim().length)
+            });
 
             inputWrapper.appendChild(input)
 
@@ -223,7 +246,7 @@
 
             let button = document.createElement('button')
             button.id = 'findAndReplaceBtn'
-            button.classList.add('w-full','text-sm','font-light','flex','items-center','justify-center','py-2','shadow-inner','transition','focus:outline-none','leading-none','select-none','rounded','text-dark-soft','bg-background')
+            button.classList.add('w-full','text-sm','font-light','flex','items-center','justify-center','py-2','shadow-inner','transition','focus:outline-none','leading-none','select-none','rounded','text-dark-soft','bg-background');
 
             let span = document.createElement('span')
             span.classList.add('flex','items-center','space-x-2')
@@ -266,7 +289,7 @@
 
         const button = (buttonText, func, css) => {
             let button = document.createElement('button')
-            button.className = `w-full text-sm font-light flex items-center justify-center py-2 shadow-inner transition focus:outline-none leading-none select-none ${css} text-dark-soft bg-background`
+            button.className = `w-full text-sm font-light flex items-center justify-center py-2 shadow-inner transition focus:outline-none leading-none select-none ${css} text-dark bg-white hover:bg-tab-light`
 
             let span = document.createElement('span')
             span.className = 'flex items-center space-x-2'
