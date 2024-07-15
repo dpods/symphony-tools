@@ -22,6 +22,7 @@
         sidebarEl.appendChild(div)
 
         div.appendChild(logo())
+        div.appendChild(expandCollapseButtons())
         div.appendChild(stripMetadataButton())
         div.appendChild(clickToCopy())
         div.appendChild(findAndReplaceForm())
@@ -92,6 +93,87 @@
         divLogo.appendChild(span1)
         divLogo.appendChild(span2)
         return divLogo
+    }
+
+    const expandCollapseButtons = () => {
+        const button = (buttonId, buttonText, func, css) => {
+            let button = document.createElement('button')
+            button.id = buttonId
+            button.className = `w-full text-sm font-light flex items-center justify-center py-2 shadow-inner transition focus:outline-none leading-none select-none ${css} text-dark bg-white hover:bg-tab-light`
+
+            let span = document.createElement('span')
+            span.className = 'flex items-center space-x-2'
+
+            let text = document.createElement('span')
+            text.innerText = buttonText
+
+            button.addEventListener('click', (e) => {
+                func(e)
+            })
+
+            span.appendChild(text)
+            button.appendChild(span)
+            return button
+        }
+
+        buttonClickHandler = (expand) => {
+            // disable buttons while toggling
+            const expandButton = document.querySelector('#ste-widget #expand-all-Button')
+            const collapseButton = document.querySelector('#ste-widget #collapse-all-button')
+
+            toggleAllBranches(expand, () => {
+                setButtonEnabled(expandButton, false)
+                setButtonEnabled(collapseButton, false)
+            }, () => {
+                setButtonEnabled(expandButton, true)
+                setButtonEnabled(collapseButton, true)
+            });
+        }
+
+        const wrapper = document.createElement('div')
+        wrapper.className = 'rounded flex border border-asset-border shadow-sm bg-panel-bg divide-x divide-solid divide-asset-border'
+
+        const expandAllButton = button('expand-all-Button', 'Expand All', ()=>buttonClickHandler(true), 'rounded-tl rounded-bl')
+        const collapseAllButton = button('collapse-all-button', 'Collapse All', ()=>buttonClickHandler(false), 'rounded-tr rounded-br')
+        wrapper.appendChild(expandAllButton)
+        wrapper.appendChild(collapseAllButton)
+        return wrapper
+    }
+
+    let togglingBranches = false;
+    const toggleAllBranches = (expand, onBegin, onComplete) => {
+        if (togglingBranches) {
+            return;
+        }
+
+        // <button class="w-4 mr-2 focus-states shrink-0 " aria-label="Toggle block"></button>
+        // <button class="w-4 mr-2 focus-states shrink-0 -rotate-90" aria-label="Toggle block"></button>
+
+        const toggleButtonSelector = (
+            expand ?
+            '#editor button[aria-label="Toggle block"].-rotate-90' :
+            'button[aria-label="Toggle block"]:not(.-rotate-90)'
+        );
+
+        function toggleBranches() {
+            togglingBranches = true;
+            setButtonEnabled(document.querySelector('#ste-widget button:nth-child(1)'), !expand)
+            const expandButtonElements = document.querySelectorAll(toggleButtonSelector);
+            expandButtonElements.forEach((el) => el.click());
+
+            // allow render cycle before checking again
+            setTimeout(() => {
+                if (document.querySelectorAll(toggleButtonSelector).length > 0) {
+                    toggleBranches();
+                } else {
+                    togglingBranches = false;
+                    onComplete?.();
+                }
+            }, 10);
+        }
+
+        onBegin?.();
+        toggleBranches();
     }
 
     const stripMetadataButton = () => {
