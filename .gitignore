@@ -2,5 +2,6 @@
 
 node_modules
 artifacts
+src/lib/pyodide
 
 .env

@@ -3,6 +3,8 @@
   "version": "2.3.0",
   "type": "module",
   "scripts": {
+    "download-resources": "node bin/pyodide-resource-downloader.js",
+    "setup": "npm run download-resources",
     "build:major": "node bin/build.js major",
     "build:minor": "node bin/build.js minor",
     "build:patch": "node bin/build.js patch"
