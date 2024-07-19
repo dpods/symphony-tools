@@ -3,5 +3,6 @@
 node_modules
 artifacts
 src/lib/pyodide
+src/lib/choicejs
 
 .env

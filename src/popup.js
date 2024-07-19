@@ -81,50 +81,6 @@ let selectedItems = new Set([
   'Worst Day',
 ]);
 
-const searchInput = document.getElementById('searchInput');
-const itemList = document.getElementById('itemList');
-const selectBox = document.getElementById('selectBox');
-const chevronIcon = document.getElementById('chevronIcon');
-const selectedItemsContainer = document.getElementById('selectedItems');
-
-function renderItems(filter = '') {
-    itemList.innerHTML = '';
-    const availableItems = items.filter(lang => !selectedItems.has(lang));
-    const filteredItems = availableItems.filter(lang => 
-        lang.toLowerCase().includes(filter.toLowerCase())
-    );
-    
-    if (filteredItems.length === 0) {
-        const div = document.createElement('div');
-        div.textContent = 'No items found';
-        div.className = 'item-item';
-        itemList.appendChild(div);
-    } else {
-        filteredItems.forEach(lang => {
-            const div = document.createElement('div');
-            div.textContent = lang;
-            div.className = 'item-item';
-            div.dataset.item = lang;
-            itemList.appendChild(div);
-        });
-    }
-}
-
-function renderSelectedItems() {
-    selectedItemsContainer.innerHTML = '';
-    selectedItems.forEach(lang => {
-        const pill = document.createElement('span');
-        pill.className = 'pill';
-        pill.textContent = lang;
-        const removeButton = document.createElement('button');
-        removeButton.className = 'pill-remove';
-        removeButton.textContent = '×';
-        removeButton.dataset.item = lang;
-        pill.appendChild(removeButton);
-        selectedItemsContainer.appendChild(pill);
-    });
-}
-
 function toggleItem(lang) {
     if (selectedItems.has(lang)) {
         selectedItems.delete(lang);
@@ -132,19 +88,8 @@ function toggleItem(lang) {
         selectedItems.add(lang);
     }
     saveSelectedItems();
-    renderSelectedItems();
-    renderItems(searchInput.value);
 }
 
-function toggleDropdown(show) {
-    if (show) {
-        itemList.classList.remove('hidden');
-        chevronIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>';
-    } else {
-        itemList.classList.add('hidden');
-        chevronIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>';
-    }
-}
 
 function saveSelectedItems() {
     chrome.storage.local.set({addedColumns: Array.from(selectedItems)}, function() {
@@ -152,49 +97,32 @@ function saveSelectedItems() {
     });
 }
 
-function loadSelectedItems() {
-    chrome.storage.local.get(['addedColumns'], function(result) {
-        if (result.selectedItems) {
-            selectedItems = new Set(result.selectedItems);
-            renderSelectedItems();
-            renderItems();
-        }
-    });
+async function loadSelectedItems() {
+    const result = await chrome.storage.local.get(['addedColumns'])
+
+    if (result.addedColumns) {
+        selectedItems = new Set(result.addedColumns);
+    }
+    return selectedItems
 }
 
-// Event Listeners
-searchInput.addEventListener('input', (e) => renderItems(e.target.value));
-searchInput.addEventListener('focus', () => {
-    toggleDropdown(true);
-    renderItems(searchInput.value);
-});
+async function initHeadersChoices() {
+  await loadSelectedItems();
+  const headersChoicesElement = document.querySelector('.headers-select-box');
+  const headersChoices = new Choices(headersChoicesElement,{
+    choices: items.map((item)=>{return {value: item, label: item, selected: selectedItems.has(item)}}),
+    removeItemButton: true,
+    removeItems: true,
+    maxItemCount: -1,
+    renderChoiceLimit: -1,
+  });
 
-document.addEventListener('click', (e) => {
-    if (!selectBox.contains(e.target) && !itemList.contains(e.target)) {
-        toggleDropdown(false);
-    }
-});
-
-selectBox.addEventListener('click', () => {
-    searchInput.focus();
-    toggleDropdown(true);
-    renderItems(searchInput.value);
-});
-
-// Event delegation for item list and selected items
-itemList.addEventListener('click', (e) => {
-    if (e.target.classList.contains('item-item')) {
-        toggleItem(e.target.dataset.item);
-    }
-});
-
-selectedItemsContainer.addEventListener('click', (e) => {
-    if (e.target.classList.contains('pill-remove')) {
-        e.stopPropagation();
-        toggleItem(e.target.dataset.item);
-    }
-});
-
-// Initial load and render
-loadSelectedItems();
-toggleDropdown(false);
+  headersChoicesElement.addEventListener(
+    'change',
+    function(event) {
+      toggleItem(event.detail.value);
+    },
+    false,
+  );
+}
+initHeadersChoices();

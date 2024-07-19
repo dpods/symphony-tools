@@ -4,14 +4,13 @@ import https from 'https';
 
 // Get the directory of the script
 // Set the download directory for pyodide
-const downloadDir = new URL('../src/lib/pyodide', import.meta.url).pathname;
+const pyodideDownloadDir = new URL('../src/lib/pyodide', import.meta.url).pathname;
+const choiceJsDownloadDir = new URL('../src/lib/choicejs', import.meta.url).pathname;
 
-if (!fs.existsSync(downloadDir)) {
-  fs.mkdirSync(downloadDir, { recursive: true });
-}
+
 
 // Function to download file if it doesn't exist
-const downloadIfNotExists = (url) => {
+const downloadIfNotExists = (url, downloadDir) => {
   const fileName = path.basename(url);
   const filePath = path.join(downloadDir, fileName);
 
@@ -33,7 +32,7 @@ const downloadIfNotExists = (url) => {
 };
 
 // URLs to download
-const urls = [
+const pyodideUrls = [
   "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js",
   "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/python_stdlib.zip",
   "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.asm.wasm",
@@ -89,5 +88,19 @@ const urls = [
   "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/webencodings-0.5.1-py2.py3-none-any.whl",
 ]
 
+const choiceJsUrls = [
+  "https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/base.min.css",
+  "https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css",
+  "https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js",
+]
 
-urls.forEach(url => downloadIfNotExists(url));
+
+function downloadResources(urls, downloadDir) {
+  if (!fs.existsSync(downloadDir)) {
+    fs.mkdirSync(downloadDir, { recursive: true });
+  }
+  urls.forEach(url => downloadIfNotExists(url, downloadDir));
+}
+
+downloadResources(pyodideUrls, pyodideDownloadDir);
+downloadResources(choiceJsUrls, choiceJsDownloadDir);

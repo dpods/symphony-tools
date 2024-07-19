@@ -93,12 +93,19 @@ function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue, calculat
     }, []);
 }
 
+function addTodaysChanges(symphony) {
+    symphony.dailyChanges.series.push(symphony.value);
+    symphony.dailyChanges.deposit_adjusted_series.push(symphony.deposit_adjusted_value);
+    symphony.dailyChanges.epoch_ms.push(Date.now());
+}
+
 function buildSymphonyPercentages(symphony, symphonyDeploys) {
     symphony.dailyChanges.percentageReturns = buildReturnsArray(
         symphony.dailyChanges,
         symphonyDeploys,
         symphony.value
     )
+    addTodaysChanges(symphony);
 }
 
 async function addQuantstatsToSymphony(symphony, accountDeploys) {
