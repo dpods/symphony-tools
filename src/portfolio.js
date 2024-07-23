@@ -79,7 +79,7 @@
     }
 
     function updateTableRows() {
-        performanceData.symphonyStats.symphonies.forEach((symphony) => {
+        performanceData?.symphonyStats?.symphonies?.forEach?.((symphony) => {
             if (symphony.addedStats) {
                 extendSymphonyStatsRow(symphony)
             }
