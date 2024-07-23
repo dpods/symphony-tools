@@ -66,6 +66,7 @@
         updateColumns(mainTable, extraColumns);
         getSymphonyPerformanceInfo().then((performanceData)=>{
             console.log('all symphony stats added', performanceData)
+            Sortable.initTable(mainTable)
         })
 
         let timeout;
@@ -134,6 +135,7 @@
             newTh.scope = 'col';
             newTh.className = 'text-xs px-6 py-2 text-dark-soft text-left font-normal whitespace-nowrap align-bottom extra-column';
             newTh.style = 'min-width: 10rem; max-width: 10rem;';
+            newTh.setAttribute('data-sortable-type', 'numeric');
             newTh.textContent = extraColumns[i];
             thead.appendChild(newTh);
         }
