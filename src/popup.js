@@ -108,21 +108,33 @@ async function loadSelectedItems() {
 
 async function initHeadersChoices() {
   await loadSelectedItems();
-  const headersChoicesElement = document.querySelector('.headers-select-box');
-  const headersChoices = new Choices(headersChoicesElement,{
-    choices: items.map((item)=>{return {value: item, label: item, selected: selectedItems.has(item)}}),
-    removeItemButton: true,
-    removeItems: true,
-    maxItemCount: -1,
-    renderChoiceLimit: -1,
+
+  $(document).ready(function() {
+
+    var selectize = $('.headers-select-box').selectize({
+        plugins: ['remove_button', 'drag_drop'],
+        persist: false,
+        valueField: "value",
+        labelField: "value",
+        searchField: ["value"],
+        create: false,
+        onChange: function(value) {
+          selectedItems = new Set(value);
+          saveSelectedItems();
+        }
+    })[0].selectize;
+
+    // Add options using Selectize API
+    items.forEach(function(option) {
+        selectize.addOption({value:option});
+    });
+
+    window.sel = selectize;
+    // Set default selected options using Selectize API
+    selectize.setValue(Array.from(selectedItems));
+
   });
 
-  headersChoicesElement.addEventListener(
-    'change',
-    function(event) {
-      toggleItem(event.detail.value);
-    },
-    false,
-  );
+
 }
 initHeadersChoices();

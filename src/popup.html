@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configure Symphony Tools</title>
-        <!-- Include base CSS (optional) -->
-    <link rel="stylesheet" href="lib/choicejs/base.min.css" />
-    <!-- Include Choices CSS -->
-    <link rel="stylesheet" href="lib/choicejs/choices.min.css" />
-    <!-- Include Choices JavaScript -->
-    <script src="lib/choicejs/choices.min.js"></script>
+    <!-- // add jquery from local lib/libjs/jquery-3.6.0.min.js -->
+    <script src="lib/jslib/jquery-3.7.1.min.js"></script>
+    <script src="lib/jslib/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="lib/jslib/selectize.default.min.css"/>
+    <script src="lib/jslib/selectize.min.js"></script>
     <style>
         :root {
             --dark-bg: #1e1e1e;
@@ -33,36 +32,37 @@
             height: 100%;
         }
 
-        .choices {
+        .selectize-input.dropdown-active::before {
             background-color: transparent;
-            color: #fff;
         }
 
-        .choices__inner {
-            background-color: #333;
-            color: #fff;
-            border-radius: 10px;
+        /* Dark Mode Styles */
+        .selectize-control .selectize-input,
+        .selectize-dropdown {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            border-color: #444444;
         }
 
-        .choices__list--multiple .choices__item {
-            background-color: #444;
-            border: 1px solid #555;
-            color: #fff;
+        .selectize-dropdown .active {
+            background-color: #3a3a3a;
+            color: #ffffff;
         }
 
-        .choices__list--dropdown .choices__item--selectable {
-            background-color: #333;
-            color: #fff;
+        .selectize-input input {
+            color: #e0e0e0;
         }
 
-        .choices__list--dropdown .choices__item--selectable.is-highlighted {
-            background-color: #555;
+        .selectize-control .selectize-input::after {
+            border-color: #e0e0e0 transparent transparent transparent;
         }
 
-        .choices__input,
-        .choices__list--single .choices__item {
-            background-color: #333;
-            color: #fff;
+        .selectize-control .selectize-input.dropdown-active::after {
+            border-color: transparent transparent #e0e0e0 transparent;
+        }
+        .selectize-dropdown .active:not(.selected) {
+            background: #393939;
+            color: #ffffff;
         }
     </style>
 </head>

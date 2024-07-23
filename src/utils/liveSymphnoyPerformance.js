@@ -30,7 +30,10 @@ function buildReturnsArray(dailyChanges, symphonyDeploys, currentValue, calculat
         // for the first item we should get the first deploy which should match the first date in the dailyChanges epoch_ms
         const dateString = (new Date(change)).toDateString();
         if (index === 0) {
-            const firstDeployAmount = sortedDeployments[0].cash_change;
+            const firstDeployAmount = sortedDeployments?.[0]?.cash_change || 0;
+            if (firstDeployAmount === 0) {
+                console.log('No deploy amount found for symphony');
+            }
             deploymentIndexToAccountFor ++;
             acc.push({
                 dateString,

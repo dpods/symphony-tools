@@ -5,7 +5,7 @@ import https from 'https';
 // Get the directory of the script
 // Set the download directory for pyodide
 const pyodideDownloadDir = new URL('../src/lib/pyodide', import.meta.url).pathname;
-const choiceJsDownloadDir = new URL('../src/lib/choicejs', import.meta.url).pathname;
+const jsLibDownloadDir = new URL('../src/lib/jslib', import.meta.url).pathname;
 
 
 
@@ -88,10 +88,11 @@ const pyodideUrls = [
   "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/webencodings-0.5.1-py2.py3-none-any.whl",
 ]
 
-const choiceJsUrls = [
-  "https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/base.min.css",
-  "https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/styles/choices.min.css",
-  "https://cdn.jsdelivr.net/npm/choices.js@9.0.1/public/assets/scripts/choices.min.js",
+const jsLib = [
+  "https://code.jquery.com/jquery-3.7.1.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.3/jquery-ui.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/css/selectize.default.min.css",
+  "https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js",
 ]
 
 
@@ -103,4 +104,4 @@ function downloadResources(urls, downloadDir) {
 }
 
 downloadResources(pyodideUrls, pyodideDownloadDir);
-downloadResources(choiceJsUrls, choiceJsDownloadDir);
+downloadResources(jsLib, jsLibDownloadDir);

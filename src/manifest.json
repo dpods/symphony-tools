@@ -58,7 +58,7 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "web_accessible_resources": [{
-    "resources": ["utils/*", "lib/pyodide/*", "popup.js"],
+    "resources": ["utils/*", "lib/*", "popup.js"],
     "matches": ["<all_urls>"]
   }]
 }
