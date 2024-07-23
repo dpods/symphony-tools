@@ -59,8 +59,8 @@ const createGitTag = async (version) => {
     const releaseType = process.argv[2]
     const packageJson = readJSON('../package.json')
     const newVersion = incrementVersion(packageJson.version, releaseType)
-    updatePackageVersion(newVersion, packageJson)
-    updateExtensionVersion(newVersion)
+    // updatePackageVersion(newVersion, packageJson)
+    // updateExtensionVersion(newVersion)
     createZipArchive(packageJson.name, newVersion)
-    await createGitTag(newVersion)
+    // await createGitTag(newVersion)
 })()

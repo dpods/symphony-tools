@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Symphony Tools</title>
+    <!-- // add jquery from local lib/libjs/jquery-3.6.0.min.js -->
+    <script src="lib/jslib/jquery-3.7.1.min.js"></script>
+    <script src="lib/jslib/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="lib/jslib/selectize.default.min.css"/>
+    <script src="lib/jslib/selectize.min.js"></script>
+    <style>
+        :root {
+            --dark-bg: #1e1e1e;
+            --dark-element: #252525;
+            --gray-200: #e5e7eb;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --teal-500: #14b8a6;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--gray-200);
+            padding: 1rem;
+            width: 20rem;
+            margin: 0;
+            height: 600px;
+        }
+        .select-container {
+            height: 100%;
+        }
+
+        .selectize-input.dropdown-active::before {
+            background-color: transparent;
+        }
+
+        /* Dark Mode Styles */
+        .selectize-control .selectize-input,
+        .selectize-dropdown {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            border-color: #444444;
+        }
+
+        .selectize-dropdown .active {
+            background-color: #3a3a3a;
+            color: #ffffff;
+        }
+
+        .selectize-input input {
+            color: #e0e0e0;
+        }
+
+        .selectize-control .selectize-input::after {
+            border-color: #e0e0e0 transparent transparent transparent;
+        }
+
+        .selectize-control .selectize-input.dropdown-active::after {
+            border-color: transparent transparent #e0e0e0 transparent;
+        }
+        .selectize-dropdown .active:not(.selected) {
+            background: #393939;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="select-container">
+        <label for="selectBox" class="headers-select-label">Profile Page Headers</label>
+        <select id="selectBox" class="headers-select-box" multiple></select>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
