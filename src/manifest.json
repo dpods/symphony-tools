@@ -39,7 +39,12 @@
         "https://app.composer.trade/portfolio",
         "https://app.composer.trade/symphony/*"
       ],
-      "js": ["utils/liveSymphnoyPerformance.js","portfolio.js"]
+      "js": [
+        "utils/sortable.js",
+        "utils/liveSymphonyPerformance.js",
+        "portfolio.js"
+      ],
+      "css": ["utils/additional.css"]
     },
     {
       "matches": ["https://app.composer.trade/portfolio"],
