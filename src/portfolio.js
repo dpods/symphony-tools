@@ -422,7 +422,7 @@
 
     function getAccountButton() {
         return Array.prototype.slice.call(document.getElementsByTagName('button')).filter(el => {
-            return el.textContent.trim().toLowerCase().includes('individual')
+            return el.textContent.trim().toLowerCase().includes('stocks')
                 || el.textContent.trim().toLowerCase().includes('roth')
                 || el.textContent.trim().toLowerCase().includes('traditional')
         })[0];
