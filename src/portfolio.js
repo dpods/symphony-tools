@@ -360,7 +360,7 @@
         )
         const data = await resp.json()
 
-        const isTaxable = getElementsByText('Taxable', 'button').length > 0
+        const isTaxable = getElementsByText('Stocks', 'button').length > 0
         const isRoth = getElementsByText('Roth', 'button').length > 0
         const isTraditional = getElementsByText('Traditional', 'button').length > 0
 
@@ -434,7 +434,7 @@
                 return 'TRADITIONAL_IRA'
             case 'Roth IRA':
                 return 'ROTH_IRA'
-            case 'Individual (Taxable)':
+            case 'Stocks':
                 return 'INDIVIDUAL'
             default:
                 throw new Error('[Symphony Tools Extension]: Unable to detect account type')
