@@ -1,4 +1,6 @@
 (() => {
+    let todaysChangeIntervalId
+
     const initPortfolioWidget = () => {
         const observer = new MutationObserver(function (mutations, mutationInstance) {
             const mainEl = document.getElementsByTagName('main')[0]
@@ -114,6 +116,10 @@
 
         if (widget) {
             widget.remove();
+
+            if (todaysChangeIntervalId) {
+                clearInterval(todaysChangeIntervalId)
+            }
         }
 
         const table = document.createElement("table");
@@ -153,14 +159,14 @@
             div1.innerText = (holding.totalAllocation * 100).toFixed(2) + '%'
             cell1.appendChild(div1)
 
-            // const cellPercentChange = currentRow.insertCell(2)
-            // cellPercentChange.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
-            // const divPercentChange = document.createElement("div");
-            // divPercentChange.id = `ste-ticker-${holding.ticker}-percent-change`
-            // divPercentChange.classList.add('cursor-pointer', 'truncate')
-            // divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
-            // divPercentChange.innerText = '--'
-            // cellPercentChange.appendChild(divPercentChange)
+            const cellPercentChange = currentRow.insertCell(2)
+            cellPercentChange.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
+            const divPercentChange = document.createElement("div");
+            divPercentChange.id = `ste-ticker-${holding.ticker}-percent-change`
+            divPercentChange.classList.add('cursor-pointer', 'truncate')
+            divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
+            divPercentChange.innerText = '--'
+            cellPercentChange.appendChild(divPercentChange)
 
             const cell2 = currentRow.insertCell(2)
             cell2.classList.add('text-sm', 'text-dark', 'whitespace-nowrap', 'py-4', 'px-6', 'truncate', 'flex', 'items-center', 'text-left')
@@ -224,12 +230,12 @@
         div2.innerText = "Total Allocation";
         cell2.appendChild(div2)
 
-        // const cellPercentChange = row.insertCell(2);
-        // cellPercentChange.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
-        // const divPercentChange = document.createElement("div");
-        // divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
-        // divPercentChange.innerText = "Today's % Change";
-        // cellPercentChange.appendChild(divPercentChange)
+        const cellPercentChange = row.insertCell(2);
+        cellPercentChange.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
+        const divPercentChange = document.createElement("div");
+        divPercentChange.style = 'min-width: 10rem; max-width: 10rem;'
+        divPercentChange.innerText = "Today's % Change";
+        cellPercentChange.appendChild(divPercentChange)
 
         const cell3 = row.insertCell(2);
         cell3.classList.add('text-xs','px-6','py-2','text-dark-soft','text-left','font-normal','whitespace-nowrap','align-bottom')
@@ -300,10 +306,11 @@
 
         mainEl.appendChild(divOuter)
 
-        // updateTickerLastPercentChanges(account.account_uuid, token)
-        // setInterval(() => {
-        //     updateTickerLastPercentChanges(account.account_uuid, token)
-        // }, 15 * 1000)
+        updateTickerLastPercentChanges(account.account_uuid, token)
+
+        todaysChangeIntervalId = setInterval(() => {
+            updateTickerLastPercentChanges(account.account_uuid, token)
+        }, 15 * 1000)
     }
 
     const getHoldingAllocationsPerSymphony = (holding) => {
@@ -400,6 +407,12 @@
 
         for (const ticker of Object.keys(percentageChanges)) {
             const el = document.getElementById(`ste-ticker-${ticker}-percent-change`)
+
+            if (!el) {
+                debug(`Can't find element for ste-ticker-${ticker}-percent-change`)
+                return
+            }
+
             const zero = (percentageChanges[ticker] * 100) === 0
             const positive = (percentageChanges[ticker] * 100) > 0
             let change = (percentageChanges[ticker] * 100).toFixed(2) + '%'
