@@ -27,9 +27,20 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://app.composer.trade/symphony/*"],
+      "matches": ["https://app.composer.trade/*"],
       "js": [
         "common.js",
+        "lib/jslib/lodash.min.js",
+        "utils/liveTickerTooltip.js"
+      ],
+      "world": "MAIN",
+      "css": [
+        "utils/liveTickerTooltip.css"
+      ]
+    },
+    {
+      "matches": ["https://app.composer.trade/symphony/*"],
+      "js": [
         "symphony.js"
       ],
       "world": "MAIN"
@@ -45,7 +56,9 @@
         "utils/factsheet.js",
         "portfolio.js"
       ],
-      "css": ["utils/additional.css"]
+      "css": [
+        "utils/additional.css"
+      ]
     },
     {
       "matches": ["https://app.composer.trade/*"],
