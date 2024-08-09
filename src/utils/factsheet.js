@@ -24,7 +24,7 @@
 
         if (factsheetOpen && factsheetGraphNode && !widgetAttached) {
             isLoggedIn() && await getTokenAndAccount(); // this is to cache the token and account
-            const exists = factsheetOpen.querySelector('#tearsheat-widget')
+            const exists = factsheetOpen?.querySelector?.('#tearsheat-widget')
             if (exists) {
               return
             }
@@ -38,7 +38,7 @@
 
   function renderTearsheetButton (factsheet) {
 
-    const graphNode = factsheet.querySelector('section')
+    const graphNode = factsheet?.querySelector?.('section')
 
     const button = (buttonId, buttonText, func, css) => {
         let button = document.createElement('button')
@@ -90,17 +90,17 @@
 
     async function buildTearsheetButtonClickHandler(testType) {
         // disable buttons while toggling
-        const buildTearsheetButton = factsheet.querySelector(`#tearsheat-widget #build-${testType}-tearsheet`)
+        const buildTearsheetButton = factsheet?.querySelector?.(`#tearsheat-widget #build-${testType}-tearsheet`)
 
         setButtonEnabled(buildTearsheetButton, false)
-        originalText = buildTearsheetButton.innerText
+        originalText = buildTearsheetButton?.innerText
         buildTearsheetButton.querySelector('span').innerHTML = `
           ${originalText.replace('Build ', 'Building ')}
           <div style="height: 27px; margin: -7px 10px;"><svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="h-full w-full" style="color: rgb(28, 32, 51);"><rect width="512" height="512" x="0" y="0" rx="0" fill="transparent" stroke="transparent" stroke-width="0" stroke-opacity="100%" paint-order="stroke"></rect><svg width="512px" height="512px" viewBox="0 0 24 24" fill="#1C2033" x="0" y="0" role="img" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle;"><g fill="#1C2033"><circle cx="4" cy="12" r="3" fill="currentColor"><animate id="svgSpinners3DotsScale0" attributeName="r" begin="0;svgSpinners3DotsScale1.end-0.25s" dur="0.75s" values="3;.2;3"></animate></circle><circle cx="12" cy="12" r="3" fill="currentColor"><animate attributeName="r" begin="svgSpinners3DotsScale0.end-0.6s" dur="0.75s" values="3;.2;3"></animate></circle><circle cx="20" cy="12" r="3" fill="currentColor"><animate id="svgSpinners3DotsScale1" attributeName="r" begin="svgSpinners3DotsScale0.end-0.45s" dur="0.75s" values="3;.2;3"></animate></circle></g></svg></svg></div>
         `;
 
-        factsheet.querySelector(`.tearsheet-${testType}-link`)?.remove()
-        let symphonyName = factsheet.querySelectorAll('.items-start')[0].innerText
+        factsheet?.querySelector?.(`.tearsheet-${testType}-link`)?.remove()
+        let symphonyName = factsheet?.querySelectorAll?.('.items-start')?.[0]?.innerText
 
         const backtestData = await getSymphonyBacktest(window.active_factsheet_symphonyId)
         let symphony = {id:window.active_factsheet_symphonyId, name:symphonyName}
@@ -128,7 +128,7 @@
         buildTearsheetButton.innerHTML = `<span class="flex items-center space-x-2">${originalText}</span>`; // Clear any previous link
         buildTearsheetButton.after(downloadLink)
         setButtonEnabled(buildTearsheetButton, true)
-        factsheet.querySelector('#tearsheat-widget').appendChild(downloadLink);
+        factsheet?.querySelector?.('#tearsheat-widget')?.appendChild?.(downloadLink);
     }
 
 
@@ -228,6 +228,7 @@
     fetchSymphonies && window.portfolio.getSymphonyStatsMeta();
 
     // wait for window.portfolio.symphonyStats.symphonies to be populated then continue
+    // TODO: this can brake if only some symphonies are loaded
     if (!window.portfolio?.symphonyStats?.symphonies) {
       await new Promise((resolve) => {
         const interval = setInterval(() => {

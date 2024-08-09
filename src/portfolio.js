@@ -157,7 +157,7 @@
                 await addQuantstatsToSymphony(symphony, accountDeploys)
                 onSymphonyCallback && onSymphonyCallback(symphony)
             } catch (error) {
-                console.error('Error adding stats to symphony', symphony, error)
+                console.warn('Error adding stats to symphony', symphony?.id, symphony?.name, error)
             }
         }
 
