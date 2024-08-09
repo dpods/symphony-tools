@@ -36,18 +36,19 @@
     },
     {
       "matches": [
-        "https://app.composer.trade/portfolio",
-        "https://app.composer.trade/symphony/*"
+        "https://app.composer.trade/*"
       ],
       "js": [
         "utils/sortable.js",
+        "utils/tokenAndAccountUtil.js",
         "utils/liveSymphonyPerformance.js",
+        "utils/factsheet.js",
         "portfolio.js"
       ],
       "css": ["utils/additional.css"]
     },
     {
-      "matches": ["https://app.composer.trade/portfolio"],
+      "matches": ["https://app.composer.trade/*"],
       "js": ["fetchAuth.js"],
       "world": "MAIN"
     }
