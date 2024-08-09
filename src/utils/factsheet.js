@@ -2,6 +2,15 @@
 (async () => {
   const getTokenAndAccount = await window.tokenAndAccountUtil.getTokenAndAccount
 
+  function isLoggedIn() {
+    if(window.location.pathname.endsWith('details')) {
+      // details page
+      return Boolean( document.querySelector('a[href="/portfolio"]')?.innerText?.includes?.('Go to Composer'))
+    }
+    // anywhere else
+    return true
+  }
+
   const waitForFactsheet = async () => {
     const observer = new MutationObserver(async function (mutations, mutationInstance) {
         let factsheetOpen = document.querySelector('.factsheet-open')
@@ -14,7 +23,7 @@
         const widgetAttached = Boolean(factsheetOpen?.querySelector?.('#tearsheat-widget'))
 
         if (factsheetOpen && factsheetGraphNode && !widgetAttached) {
-            await getTokenAndAccount(); // this is to cache the token and account
+            isLoggedIn() && await getTokenAndAccount(); // this is to cache the token and account
             const exists = factsheetOpen.querySelector('#tearsheat-widget')
             if (exists) {
               return
@@ -101,16 +110,15 @@
             dailyChanges: await window.portfolio.getSymphonyDailyChange(window.active_factsheet_symphonyId)
           }
         } else if (testType === 'oos') {
-          const {token} = await getTokenAndAccount()
+          const {token} = isLoggedIn() && (await getTokenAndAccount()) || {}
+          const fetchHeaders = {};
+          isLoggedIn() && (fetchHeaders['Authorization'] = `Bearer ${token}`);
+          fetchHeaders['accept'] = 'application/json'
+
           symphony = {
             ...symphony,
             ...await (
-              await fetch('https://backtest-api.composer.trade/api/v1/public/symphonies/' + window.active_factsheet_symphonyId, {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'accept': 'application/json'
-                }
-              })
+              await fetch('https://backtest-api.composer.trade/api/v1/public/symphonies/' + window.active_factsheet_symphonyId, {headers: fetchHeaders})
             ).json()
           }
         }
@@ -144,13 +152,20 @@
 
 
   async function getSymphonyBacktest(symphonyId) {
-    const {
-        token,
-        account
-    } = await getTokenAndAccount()
+    let auth
+    if (isLoggedIn()) {
+      auth = await getTokenAndAccount()
+    }
+    const {token, account} = auth || {}
+
+    const fetchHeaders = {};
+    isLoggedIn() && (fetchHeaders['Authorization'] = `Bearer ${token}`);
+    fetchHeaders['accept'] = 'application/json'
+    fetchHeaders['Content-Type'] = 'application/json'
 
     const response = await fetch(
-        `https://backtest-api.composer.trade/api/v2/symphonies/${symphonyId}/backtest`, // all user initiated symphony cash allocation changes
+        // using public endpoint for backtests when not logged in
+        `https://backtest-api.composer.trade/api/v2${isLoggedIn() ? '' : '/public'}/symphonies/${symphonyId}/backtest`, 
         {
             method: 'POST',
             body: JSON.stringify(  {
@@ -169,11 +184,7 @@
               //   "SPY"
               // ]
             }),
-            headers: {
-                'accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: fetchHeaders
         },
 
     )
@@ -245,12 +256,14 @@
   
       // console.log(clickedTableRowOrCell, 'nested element')
   
-      if (clickedTableRowOrCell.tagName === 'TD') {
+      if (clickedTableRowOrCell?.tagName === 'TD') {
           // console.log(await getSymphonyIdFromName(clickedTableRowOrCell?.innerText?.trim?.()))
           window.active_factsheet_symphonyId = await getSymphonyIdFromName(clickedTableRowOrCell?.innerText?.trim?.())
-      } else {
+      } else if (clickedTableRowOrCell) {
           // console.log(clickedTableRowOrCell?.href?.split?.('/')?.[4])
           window.active_factsheet_symphonyId = clickedTableRowOrCell?.href?.split?.('/')?.[4]
+      } else {
+        console.warning('Could not find get dom node for symphony id')
       }
     }
   }

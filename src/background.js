@@ -58,7 +58,7 @@ async function getTearsheetHtml(symphony, series_data, type, backtestData) {
       series_data.deposit_adjusted_series.push(amount)
     })
   } else if (type === 'oos') {
-    const oosStartDate = new Date(symphony.last_semantic_update_at.split('[')[0])
+    const oosStartDate = new Date(symphony.last_semantic_update_at.split('[')[0]) // this is removing the timezone
     series_data = {deposit_adjusted_series:[],epoch_ms:[]}
     Object.entries(backtestData.dvm_capital[symphony.id]).forEach(([day,amount])=>{
       if (oosStartDate >= new Date(day*24 * 60 * 60 * 1000)) { return }
