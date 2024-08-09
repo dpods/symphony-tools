@@ -11,6 +11,7 @@
 <body>
     <h1>QuantStats Demo</h1>
     <button onclick="runQuantStats()">Run QuantStats</button>
+    <div id="download-link"></div>
     <div id="output"></div>
 
     <script>
@@ -57,40 +58,103 @@
 
         let pyodideReadyPromise = loadPyodideAndPackages();
 
+        async function getTearsheet() {
+            let pyodide = await pyodideReadyPromise;
+            return await pyodide.runPythonAsync(`
+                import quantstats as qs
+                import pandas as pd
+                import json
+                import sys
+                import matplotlib
+                import tempfile
+                import os
+
+                matplotlib.use('Agg')
+
+                symphony_id = 'sym_test'
+                symphony_name = 'Symphony Test'
+
+                # Enable extend_pandas functionality from QuantStats
+                qs.extend_pandas()
+
+                # Parse the JSON data
+                data = json.loads('''{"epoch_ms":[1711584000000,1711929600000,1712016000000,1712102400000,1712188800000,1712275200000,1712534400000,1712620800000,1712707200000,1712793600000,1712880000000,1713139200000,1713225600000,1713312000000,1713398400000,1713484800000,1713744000000,1713830400000,1713916800000,1714003200000,1714089600000,1714348800000,1714435200000,1714521600000,1714608000000,1714694400000,1714953600000,1715040000000,1715126400000,1715212800000,1715299200000,1715558400000,1715644800000,1715731200000,1715817600000,1715904000000,1716163200000,1716249600000,1716336000000,1716422400000,1716508800000,1716854400000,1716940800000,1717027200000,1717113600000,1717372800000,1717459200000,1717545600000,1717632000000,1717718400000,1717977600000,1718064000000,1718150400000,1718236800000,1718323200000,1718582400000,1718668800000,1718841600000,1718928000000,1719187200000,1719273600000,1719360000000,1719446400000,1719532800000,1719792000000,1719878400000,1719964800000,1720137600000,1720396800000,1720483200000,1720569600000,1720656000000],"series":[198.9,200.13,194.77,196.06,186.82,193.41,193.54,195.54,99941.74,104634.7,99586.38,94587.45,94602.58,91095.58,89467.36,83927.78,86367.91,90213.06,91095.01,89636.4,93753.96,94873.31,89440.37,87518,90755.06,96159.38,99311.2,99311.2,99124.66,99666.15,100344.5,101004.3,102884.57,104629.04,103986.14,103755.35,105894.28,106438.26,106372.32,104789.84,107719.42,108889.75,106611.17,103186.28,103072.01,104076.42,104849.36,111172.44,111040.58,110628.53,111798.76,114103.41,113969.3,113953.61,118972.49,117909.8,117233.55,121502.16,120386.77,116313,120193.41,118477.11,119335.33,117457.78,119383.06,123038.67,126058.23,130353.98,129558.07,129558.07,174185.18,174657.79],"deposit_adjusted_series":[200,200.34,194.98,196.27,187.01,193.6,193.72,195.71,195.41,204.59,194.71,184.94,184.97,178.11,174.93,164.1,168.87,176.39,178.11,175.26,183.31,185.5,174.88,171.12,177.45,188.01,194.18,194.18,193.81,194.87,196.2,197.49,201.16,210.71,209.42,208.95,213.26,214.36,214.22,211.03,216.94,219.28,214.71,207.81,207.58,209.6,211.16,223.89,223.63,222.8,225.15,229.79,240,240,250.57,248.33,246.91,255.9,253.55,244.97,253.14,253.74,255.58,251.56,255.68,263.51,271.01,279.18,279.62,279.62,279.09,279.85]}''')
+
+                # Create pandas Series for each field
+                datetime_series = pd.to_datetime(data['epoch_ms'], unit='ms')
+                series_series = pd.Series(data['series'], index=datetime_series, name='series')
+                deposit_adjusted_series = pd.Series(data['deposit_adjusted_series'], index=datetime_series, name='deposit_adjusted_series')
+
+                # Generate HTML report to a temporary file
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
+                temp_file_path = temp_file.name
+                temp_file.close()
+
+                qs.reports.html(deposit_adjusted_series, title=symphony_id, output=temp_file_path)
+                with open(temp_file_path, 'r', encoding='utf-8') as file:
+                    html_report_content = file.read()
+                os.remove(temp_file_path)
+                html_report_content
+
+            `);
+        }
+
+        async function getQuantstats() {
+            let pyodide = await pyodideReadyPromise;
+            return await pyodide.runPythonAsync(`
+                import quantstats as qs
+                import pandas as pd
+                import json
+
+                symphony_id = 'sym_test'
+                symphony_name = 'Symphony Test'
+
+                # Enable extend_pandas functionality from QuantStats
+                qs.extend_pandas()
+
+                # Parse the JSON data
+                data = json.loads('''{"epoch_ms":[1711584000000,1711929600000,1712016000000,1712102400000,1712188800000,1712275200000,1712534400000,1712620800000,1712707200000,1712793600000,1712880000000,1713139200000,1713225600000,1713312000000,1713398400000,1713484800000,1713744000000,1713830400000,1713916800000,1714003200000,1714089600000,1714348800000,1714435200000,1714521600000,1714608000000,1714694400000,1714953600000,1715040000000,1715126400000,1715212800000,1715299200000,1715558400000,1715644800000,1715731200000,1715817600000,1715904000000,1716163200000,1716249600000,1716336000000,1716422400000,1716508800000,1716854400000,1716940800000,1717027200000,1717113600000,1717372800000,1717459200000,1717545600000,1717632000000,1717718400000,1717977600000,1718064000000,1718150400000,1718236800000,1718323200000,1718582400000,1718668800000,1718841600000,1718928000000,1719187200000,1719273600000,1719360000000,1719446400000,1719532800000,1719792000000,1719878400000,1719964800000,1720137600000,1720396800000,1720483200000,1720569600000,1720656000000],"series":[198.9,200.13,194.77,196.06,186.82,193.41,193.54,195.54,99941.74,104634.7,99586.38,94587.45,94602.58,91095.58,89467.36,83927.78,86367.91,90213.06,91095.01,89636.4,93753.96,94873.31,89440.37,87518,90755.06,96159.38,99311.2,99311.2,99124.66,99666.15,100344.5,101004.3,102884.57,104629.04,103986.14,103755.35,105894.28,106438.26,106372.32,104789.84,107719.42,108889.75,106611.17,103186.28,103072.01,104076.42,104849.36,111172.44,111040.58,110628.53,111798.76,114103.41,113969.3,113953.61,118972.49,117909.8,117233.55,121502.16,120386.77,116313,120193.41,118477.11,119335.33,117457.78,119383.06,123038.67,126058.23,130353.98,129558.07,129558.07,174185.18,174657.79],"deposit_adjusted_series":[200,200.34,194.98,196.27,187.01,193.6,193.72,195.71,195.41,204.59,194.71,184.94,184.97,178.11,174.93,164.1,168.87,176.39,178.11,175.26,183.31,185.5,174.88,171.12,177.45,188.01,194.18,194.18,193.81,194.87,196.2,197.49,201.16,210.71,209.42,208.95,213.26,214.36,214.22,211.03,216.94,219.28,214.71,207.81,207.58,209.6,211.16,223.89,223.63,222.8,225.15,229.79,240,240,250.57,248.33,246.91,255.9,253.55,244.97,253.14,253.74,255.58,251.56,255.68,263.51,271.01,279.18,279.62,279.62,279.09,279.85]}''')
+
+                # Create pandas Series for each field
+                datetime_series = pd.to_datetime(data['epoch_ms'], unit='ms')
+                series_series = pd.Series(data['series'], index=datetime_series, name='series')
+                deposit_adjusted_series = pd.Series(data['deposit_adjusted_series'], index=datetime_series, name='deposit_adjusted_series')
+
+                quantstats_metrics = qs.reports.metrics(deposit_adjusted_series, title=symphony_name, mode='full', display = False, sep=True, prepare_returns=False, internal="True").to_dict()['Strategy']
+                quantstats_months = qs.stats.monthly_returns(deposit_adjusted_series).to_dict()
+                quantstats_drawdown_series = qs.stats.to_drawdown_series(deposit_adjusted_series)
+                quantstats_drawdown_details = qs.stats.drawdown_details(quantstats_drawdown_series).sort_values(by='max drawdown', ascending=True)[:30].to_dict('records')
+                # qs.reports.html(deposit_adjusted_series, title=symphony_id, output=f"/{symphony_id}.html") would love to get this working and maybe serve it as a blob
+
+                json.dumps({'quantstats_metrics':quantstats_metrics, 'quantstats_months':quantstats_months, 'quantstats_drawdown_details': quantstats_drawdown_details})
+
+            `);
+        }
+
         async function runQuantStats() {
             let pyodide = await pyodideReadyPromise;
             try {
-                let output = await pyodide.runPythonAsync(`
-
-                  import quantstats as qs
-                  import pandas as pd
-                  import json
-
-                  symphony_id = 'sym_test'
-                  symphony_name = 'Symphony Test'
-
-                  # Enable extend_pandas functionality from QuantStats
-                  qs.extend_pandas()
-
-                  # Parse the JSON data
-                  data = json.loads('''{"epoch_ms":[1711584000000,1711929600000,1712016000000,1712102400000,1712188800000,1712275200000,1712534400000,1712620800000,1712707200000,1712793600000,1712880000000,1713139200000,1713225600000,1713312000000,1713398400000,1713484800000,1713744000000,1713830400000,1713916800000,1714003200000,1714089600000,1714348800000,1714435200000,1714521600000,1714608000000,1714694400000,1714953600000,1715040000000,1715126400000,1715212800000,1715299200000,1715558400000,1715644800000,1715731200000,1715817600000,1715904000000,1716163200000,1716249600000,1716336000000,1716422400000,1716508800000,1716854400000,1716940800000,1717027200000,1717113600000,1717372800000,1717459200000,1717545600000,1717632000000,1717718400000,1717977600000,1718064000000,1718150400000,1718236800000,1718323200000,1718582400000,1718668800000,1718841600000,1718928000000,1719187200000,1719273600000,1719360000000,1719446400000,1719532800000,1719792000000,1719878400000,1719964800000,1720137600000,1720396800000,1720483200000,1720569600000,1720656000000],"series":[198.9,200.13,194.77,196.06,186.82,193.41,193.54,195.54,99941.74,104634.7,99586.38,94587.45,94602.58,91095.58,89467.36,83927.78,86367.91,90213.06,91095.01,89636.4,93753.96,94873.31,89440.37,87518,90755.06,96159.38,99311.2,99311.2,99124.66,99666.15,100344.5,101004.3,102884.57,104629.04,103986.14,103755.35,105894.28,106438.26,106372.32,104789.84,107719.42,108889.75,106611.17,103186.28,103072.01,104076.42,104849.36,111172.44,111040.58,110628.53,111798.76,114103.41,113969.3,113953.61,118972.49,117909.8,117233.55,121502.16,120386.77,116313,120193.41,118477.11,119335.33,117457.78,119383.06,123038.67,126058.23,130353.98,129558.07,129558.07,174185.18,174657.79],"deposit_adjusted_series":[200,200.34,194.98,196.27,187.01,193.6,193.72,195.71,195.41,204.59,194.71,184.94,184.97,178.11,174.93,164.1,168.87,176.39,178.11,175.26,183.31,185.5,174.88,171.12,177.45,188.01,194.18,194.18,193.81,194.87,196.2,197.49,201.16,210.71,209.42,208.95,213.26,214.36,214.22,211.03,216.94,219.28,214.71,207.81,207.58,209.6,211.16,223.89,223.63,222.8,225.15,229.79,240,240,250.57,248.33,246.91,255.9,253.55,244.97,253.14,253.74,255.58,251.56,255.68,263.51,271.01,279.18,279.62,279.62,279.09,279.85]}''')
-
-                  # Create pandas Series for each field
-                  datetime_series = pd.to_datetime(data['epoch_ms'], unit='ms')
-                  series_series = pd.Series(data['series'], index=datetime_series, name='series')
-                  deposit_adjusted_series = pd.Series(data['deposit_adjusted_series'], index=datetime_series, name='deposit_adjusted_series')
-
-                  quantstats_metrics = qs.reports.metrics(deposit_adjusted_series, title=symphony_name, mode='full', display = False, sep=True, prepare_returns=False, internal="True").to_dict()['Strategy']
-                  quantstats_months = qs.stats.monthly_returns(deposit_adjusted_series).to_dict()
-                  quantstats_drawdown_series = qs.stats.to_drawdown_series(deposit_adjusted_series)
-                  quantstats_drawdown_details = qs.stats.drawdown_details(quantstats_drawdown_series).sort_values(by='max drawdown', ascending=True)[:30].to_dict('records')
-                  # qs.reports.html(deposit_adjusted_series, title=symphony_id, output=f"/{symphony_id}.html") would love to get this working and maybe serve it as a blob
-
-                  json.dumps({'quantstats_metrics':quantstats_metrics, 'quantstats_months':quantstats_months, 'quantstats_drawdown_details': quantstats_drawdown_details})
-
-                `);
+                let quantstats = await getQuantstats();
+                let tearsheet = await getTearsheet();
                 
-                document.getElementById("output").innerText = output;
+
+                // Create a Blob from the HTML content
+                const blob = new Blob([tearsheet], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+
+                // Create a downloadable link
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.target = '_blank';
+                downloadLink.textContent = 'Open QuantStats tearsheet Report';
+                downloadLink.style.display = 'block';
+                downloadLink.style.marginTop = '20px';
+
+                const linkContainer = document.getElementById('download-link');
+                linkContainer.innerHTML = ''; // Clear any previous link
+                linkContainer.appendChild(downloadLink);
+
+                document.getElementById("output").innerText = quantstats;
             } catch (err) {
                 console.error(err);
                 document.getElementById("output").innerText = "An error occurred: " + err.message;
