@@ -13,6 +13,8 @@
 
   //----------------------------------------------
 
+  let lastTickerHovered = null;
+
   let tickerCache = {};
   try {
     tickerCache = JSON.parse(localStorage.getItem('tickerCache')) || {};
@@ -51,7 +53,7 @@
   function getTickersFromElement(tickerElement) {
     let matches;
 
-    const TICKER_REGEX = /\b[A-Z]{1,6}\b/g; // do we need to include numbers?
+    const TICKER_REGEX = /\b[A-Z0-9\.]{1,6}\b/g; // do we need to include numbers?
     const ignoredTextContents = [
       'Cash Remainder',
       'US Dollar',
@@ -69,7 +71,7 @@
     return matches ? matches?.map(match => match.trim().toUpperCase()) : [];
   }
 
-  const debouncedShowTooltip = _.debounce(function showTooltip(ticker, event) {
+  function showTooltip(ticker, event) {
     if (!ticker) {
       setToolTipVisible(false);
       return;
@@ -115,25 +117,33 @@
       localStorage.setItem('tickerCache', JSON.stringify(tickerCache));
 
       // if the first item is USD, then the requested ticker was not found
-      if (!name) {
+      if (!name || !lastTickerHovered) {
         setToolTipVisible(false);
-      } else {
+      } else if(ticker === lastTickerHovered) {
         tooltip.innerHTML = `<div class="tooltip-content"><strong>${ticker}:</strong> ${name}</div>`;
       }
     }).catch(error => {
       tooltip.innerHTML = `<div class="tooltip-content"><strong>${ticker}:</strong> Error loading info</div>`;
     });
-  }, 500); // should be long enough for content to load so that cache can be used
+  }
+  const debouncedShowTooltip = _.debounce(showTooltip, 500); // should be long enough for content to load so that cache can be used
 
-  const debouncedCheckTicker = _.debounce(function(event) {
+  function checkTicker(event) {
     const elementFromPoint = document.elementFromPoint(event.clientX, event.clientY);
     const tickers = getTickersFromElement(elementFromPoint);
     if (tickers?.length) {
-      debouncedShowTooltip(tickers[0], event);
+      if (tickers[0] === lastTickerHovered) {
+        debouncedShowTooltip(tickers[0], event);
+      } else {
+        showTooltip(tickers[0], event);
+      }
+      lastTickerHovered = tickers[0];
     } else {
       setToolTipVisible(false);
+      lastTickerHovered = null;
     }
-  }, 10);
+  }
+  const debouncedCheckTicker = _.debounce(checkTicker, 10);
 
   // Initialize the script
   function initLiveTickerTooltip() {
