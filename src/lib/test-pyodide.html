@@ -1,66 +1,100 @@
-
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QuantStats in Browser</title>
     <script src="./pyodide/pyodide.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <h1>QuantStats Demo</h1>
     <button onclick="runQuantStats()">Run QuantStats</button>
     <div id="download-link"></div>
     <div id="output"></div>
 
     <script>
-        async function loadPyodideAndPackages() {
-            let pyodide = await loadPyodide();
-            await pyodide.loadPackage("pandas");
-            await pyodide.loadPackage('micropip');
-            await pyodide.loadPackage('ipython');
-            await pyodide.loadPackage('openblas');
-            await pyodide.loadPackage( "./pyodide/QuantStats-0.0.62-py2.py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/tabulate-0.9.0-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/yfinance-0.2.40-py2.py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/seaborn-0.13.2-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/platformdirs-4.2.2-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/frozendict-2.4.4-py312-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/multitasking-0.0.11-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl");
-            await pyodide.loadPackage( "./pyodide/cycler-0.12.1-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/fonttools-4.51.0-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/kiwisolver-1.4.5-cp312-cp312-pyodide_2024_0_wasm32.whl");
-            await pyodide.loadPackage( "./pyodide/pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-            await pyodide.loadPackage( "./pyodide/pyparsing-3.1.2-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/matplotlib_pyodide-0.2.2-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/scipy-1.12.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-            await pyodide.loadPackage( "./pyodide/requests-2.31.0-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/charset_normalizer-3.3.2-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/idna-3.7-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/urllib3-2.2.1-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/certifi-2024.2.2-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/beautifulsoup4-4.12.3-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/soupsieve-2.5-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/peewee-3.17.3-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/cffi-1.16.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-            await pyodide.loadPackage( "./pyodide/pycparser-2.22-py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/lxml-5.2.1-cp312-cp312-pyodide_2024_0_wasm32.whl");
-            await pyodide.loadPackage( "./pyodide/html5lib-1.1-py2.py3-none-any.whl");
-            await pyodide.loadPackage( "./pyodide/webencodings-0.5.1-py2.py3-none-any.whl");
-            // await pyodide.runPythonAsync(`
-            //   import micropip
-            //   await micropip.install('quantstats')
-            // `);
-            return pyodide;
-        }
+      async function loadPyodideAndPackages() {
+        let pyodide = await loadPyodide();
+        await pyodide.loadPackage("pandas");
+        await pyodide.loadPackage("micropip");
+        await pyodide.loadPackage("ipython");
+        await pyodide.loadPackage("openblas");
+        await pyodide.loadPackage(
+          "./pyodide/QuantStats-0.0.62-py2.py3-none-any.whl",
+        );
+        await pyodide.loadPackage("./pyodide/tabulate-0.9.0-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/yfinance-0.2.40-py2.py3-none-any.whl",
+        );
+        await pyodide.loadPackage("./pyodide/seaborn-0.13.2-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/platformdirs-4.2.2-py3-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/frozendict-2.4.4-py312-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/multitasking-0.0.11-py3-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl",
+        );
+        await pyodide.loadPackage("./pyodide/cycler-0.12.1-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/fonttools-4.51.0-py3-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/kiwisolver-1.4.5-cp312-cp312-pyodide_2024_0_wasm32.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
+        );
+        await pyodide.loadPackage("./pyodide/pyparsing-3.1.2-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/matplotlib_pyodide-0.2.2-py3-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/scipy-1.12.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
+        );
+        await pyodide.loadPackage("./pyodide/requests-2.31.0-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/charset_normalizer-3.3.2-py3-none-any.whl",
+        );
+        await pyodide.loadPackage("./pyodide/idna-3.7-py3-none-any.whl");
+        await pyodide.loadPackage("./pyodide/urllib3-2.2.1-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/certifi-2024.2.2-py3-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/beautifulsoup4-4.12.3-py3-none-any.whl",
+        );
+        await pyodide.loadPackage("./pyodide/soupsieve-2.5-py3-none-any.whl");
+        await pyodide.loadPackage("./pyodide/peewee-3.17.3-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/cffi-1.16.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
+        );
+        await pyodide.loadPackage("./pyodide/pycparser-2.22-py3-none-any.whl");
+        await pyodide.loadPackage(
+          "./pyodide/lxml-5.2.1-cp312-cp312-pyodide_2024_0_wasm32.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/html5lib-1.1-py2.py3-none-any.whl",
+        );
+        await pyodide.loadPackage(
+          "./pyodide/webencodings-0.5.1-py2.py3-none-any.whl",
+        );
+        // await pyodide.runPythonAsync(`
+        //   import micropip
+        //   await micropip.install('quantstats')
+        // `);
+        return pyodide;
+      }
 
-        let pyodideReadyPromise = loadPyodideAndPackages();
+      let pyodideReadyPromise = loadPyodideAndPackages();
 
-        async function getTearsheet() {
-            let pyodide = await pyodideReadyPromise;
-            return await pyodide.runPythonAsync(`
+      async function getTearsheet() {
+        let pyodide = await pyodideReadyPromise;
+        return await pyodide.runPythonAsync(`
                 import quantstats as qs
                 import pandas as pd
                 import json
@@ -97,11 +131,11 @@
                 html_report_content
 
             `);
-        }
+      }
 
-        async function getQuantstats() {
-            let pyodide = await pyodideReadyPromise;
-            return await pyodide.runPythonAsync(`
+      async function getQuantstats() {
+        let pyodide = await pyodideReadyPromise;
+        return await pyodide.runPythonAsync(`
                 import quantstats as qs
                 import pandas as pd
                 import json
@@ -129,37 +163,37 @@
                 json.dumps({'quantstats_metrics':quantstats_metrics, 'quantstats_months':quantstats_months, 'quantstats_drawdown_details': quantstats_drawdown_details})
 
             `);
+      }
+
+      async function runQuantStats() {
+        let pyodide = await pyodideReadyPromise;
+        try {
+          let quantstats = await getQuantstats();
+          let tearsheet = await getTearsheet();
+
+          // Create a Blob from the HTML content
+          const blob = new Blob([tearsheet], { type: "text/html" });
+          const url = URL.createObjectURL(blob);
+
+          // Create a downloadable link
+          const downloadLink = document.createElement("a");
+          downloadLink.href = url;
+          downloadLink.target = "_blank";
+          downloadLink.textContent = "Open QuantStats tearsheet Report";
+          downloadLink.style.display = "block";
+          downloadLink.style.marginTop = "20px";
+
+          const linkContainer = document.getElementById("download-link");
+          linkContainer.innerHTML = ""; // Clear any previous link
+          linkContainer.appendChild(downloadLink);
+
+          document.getElementById("output").innerText = quantstats;
+        } catch (err) {
+          console.error(err);
+          document.getElementById("output").innerText =
+            "An error occurred: " + err.message;
         }
-
-        async function runQuantStats() {
-            let pyodide = await pyodideReadyPromise;
-            try {
-                let quantstats = await getQuantstats();
-                let tearsheet = await getTearsheet();
-                
-
-                // Create a Blob from the HTML content
-                const blob = new Blob([tearsheet], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-
-                // Create a downloadable link
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.target = '_blank';
-                downloadLink.textContent = 'Open QuantStats tearsheet Report';
-                downloadLink.style.display = 'block';
-                downloadLink.style.marginTop = '20px';
-
-                const linkContainer = document.getElementById('download-link');
-                linkContainer.innerHTML = ''; // Clear any previous link
-                linkContainer.appendChild(downloadLink);
-
-                document.getElementById("output").innerText = quantstats;
-            } catch (err) {
-                console.error(err);
-                document.getElementById("output").innerText = "An error occurred: " + err.message;
-            }
-        }
+      }
     </script>
-</body>
+  </body>
 </html>
