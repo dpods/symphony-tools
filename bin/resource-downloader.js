@@ -1,11 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // Get the directory of the script
 // Set the download directory for pyodide
-const pyodideDownloadDir = new URL('../src/lib/pyodide', import.meta.url).pathname;
-const jsLibDownloadDir = new URL('../src/lib/jslib', import.meta.url).pathname;
+const pyodideDownloadDir = path.resolve(__dirname, '../src/lib/pyodide');
+const jsLibDownloadDir = path.resolve(__dirname, '../src/lib/jslib');
 
 
 

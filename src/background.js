@@ -43,6 +43,96 @@ async function loadPyodideAndPackages() {
 pyodideReadyPromise = loadPyodideAndPackages()
 
 
+async function getTearsheetHtml(symphony, series_data, type, backtestData) {
+  // series_data is an object with the following structure
+  // {
+  //   "epoch_ms":[1711584000000],
+  //   "series":[198.9],
+  //   "deposit_adjusted_series":[200]
+  // }
+
+  if (type === 'backtest') {
+    series_data = {deposit_adjusted_series:[],epoch_ms:[]}
+    Object.entries(backtestData.dvm_capital[symphony.id]).forEach(([day,amount])=>{
+      series_data.epoch_ms.push(day*24 * 60 * 60 * 1000)
+      series_data.deposit_adjusted_series.push(amount)
+    })
+  } else if (type === 'oos') {
+    const oosStartDate = new Date(symphony.last_semantic_update_at.split('[')[0]) // this is removing the timezone
+    series_data = {deposit_adjusted_series:[],epoch_ms:[]}
+    Object.entries(backtestData.dvm_capital[symphony.id]).forEach(([day,amount])=>{
+      if (oosStartDate >= new Date(day*24 * 60 * 60 * 1000)) { return }
+      series_data.epoch_ms.push(day*24 * 60 * 60 * 1000)
+      series_data.deposit_adjusted_series.push(amount)
+    })
+  }
+  // if type is live then we don't need to do anything since the series_data is already in the correct format
+
+  if(series_data.epoch_ms.length <= 1) {
+    return {error: `Symphony_name:${symphony.name} Symphony_id:${symphony.id} Not enough data to calculate tearsheet report`};
+  }
+  let previousValue = series_data.deposit_adjusted_series[0]
+  series_data.returns = series_data.deposit_adjusted_series.map((point)=>{
+    const thisValue = (point - previousValue) / previousValue
+    previousValue = point
+    return thisValue
+  })
+
+  
+  pyodideReadyPromise = pyodideReadyPromise || loadPyodideAndPackages();
+  let pyodide = await pyodideReadyPromise;
+  try {
+      let tearsheetHtml = await pyodide.runPythonAsync(`
+
+        import quantstats as qs
+        import pandas as pd
+        import json
+        import sys
+        import matplotlib
+        import tempfile
+        import os
+
+        # Set matplotlib to use the Agg backend to avoid displaying plots this is necessary for running in a headless environment
+        matplotlib.use('Agg')
+
+        symphony_id = '${symphony.id.replace(/'/g, "\\'")}'
+        symphony_name = '${symphony.name.replace(/'/g, "\\'")} ${type}'
+
+        # Enable extend_pandas functionality from QuantStats
+        qs.extend_pandas()
+
+        # Parse the JSON data
+        data = json.loads('''${JSON.stringify(series_data)}''')
+
+
+        # Create pandas Series for each field
+        datetime_series = pd.to_datetime(data['epoch_ms'], unit='ms')
+        # series_series = pd.Series(data['series'], index=datetime_series, name='series') # we are not using the series for now since it will include deposits and withdrawals skewing the results
+        # deposit_adjusted_series = pd.Series(data['deposit_adjusted_series'], index=datetime_series, name='deposit_adjusted_series')
+        returns_series = pd.Series(data['returns'], index=datetime_series, name='returns')
+
+        # Generate HTML report to a temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file_path = temp_file.name
+        temp_file.close()
+
+        qs.reports.html(returns_series, title=symphony_name, output=temp_file_path)
+        with open(temp_file_path, 'r', encoding='utf-8') as file:
+            html_report_content = file.read()
+        os.remove(temp_file_path)
+        html_report_content
+
+      `);
+      
+      return tearsheetHtml;
+  } catch (err) {
+      console.error(err);
+      return {error:"An error occurred: " + err.message};
+  }
+}
+
+
+
 async function getQuantStats(symphony, series_data) {
   // series_data is an object with the following structure
   // {
@@ -106,17 +196,18 @@ async function getQuantStats(symphony, series_data) {
 
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
   if (request.action === "onToken") {
-    const expiry = Date.now() + 20 * 60 * 1000;
-    // save the token in localstorage and refresh it every 20 minutes
+    const expiry = Date.now() + 10 * 60 * 1000;
+    // save the token in session and refresh it every 10 minutes
     chrome.storage.local.set({tokenInfo: {token:request.token, expiry}});
   }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  const symphony = request?.symphony;
   console.log("Received message", request);
 
   if (request.action === "getQuantStats") {
+    const symphony = request?.symphony;
+
     console.log("Getting QuantStats");
     console.log('sym', symphony);
     console.log('dc',symphony?.dailyChanges);
@@ -135,6 +226,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         ).then((quantStats)=>{
           chrome.storage.local.set({[cacheKey]: {value: quantStats, expiry: cacheExpiry}});
           sendResponse(quantStats);
+        });
+      }
+    });
+
+    return true; // Indicates we will send a response asynchronously
+  }
+
+  const types = ["live", "backtest", "oos"];
+
+  if (request.action === "getTearsheet") {
+    if (!types.includes(request?.type)) {
+      return true;
+    }
+
+    const symphony = request?.symphony;
+    const backtestData = request?.backtestData;
+
+    console.log("Getting TearsheetBlobUrl");
+    console.log('sym', symphony);
+    console.log('dc',symphony?.dailyChanges);
+
+    // cache the result in chrome.storage.local for 3 hours. check if the cache is still valid
+    const cacheKey = `tearsheeturl_${request?.type}_${symphony.id}`;
+    const cacheExpiry = Date.now() + 3 * 60 * 60 * 1000;
+    chrome.storage.local.get(cacheKey, (cache) => {
+      if (cache[cacheKey] && cache[cacheKey].expiry > Date.now()) {
+        console.log("Returning cached result");
+        sendResponse(cache[cacheKey].value);
+      } else {
+        getTearsheetHtml(
+          symphony,
+          symphony?.dailyChanges,
+          request?.type,
+          backtestData
+        ).then((TearsheetHtml)=>{
+          chrome.storage.local.set({[cacheKey]: {value: TearsheetHtml, expiry: cacheExpiry}});
+          sendResponse(TearsheetHtml);
         });
       }
     });

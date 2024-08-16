@@ -13,3 +13,11 @@
   background-position: right 30px bottom 11px;
   background-repeat: no-repeat;  
 }
+
+#app table[data-sortable-initialized="true"] tr > th:first-child, td:first-child {
+  position: sticky;
+  left: 0;
+  border-right: 1px solid #cfcfcf;
+  z-index: 1;
+  background: rgb(236 237 238 / var(--tw-bg-opacity));
+}

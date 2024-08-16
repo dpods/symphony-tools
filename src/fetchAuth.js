@@ -24,7 +24,7 @@ const extensionId = getCurrentExtensionId();
 async function sendToken () {
     let token = await cli.getTemporaryToken();
     chrome.runtime.sendMessage(extensionId, { action: 'onToken', token });
-    setTimeout(sendToken, 1000 * 60 * 20); // refresh token every 20 minutes
+    setTimeout(sendToken, 1000 * 60 * 10); // refresh token every 10 minutes
 }
 
 const waitForDom = async () => {
