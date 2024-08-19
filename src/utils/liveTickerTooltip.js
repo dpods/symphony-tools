@@ -8,18 +8,32 @@
     'table tr td:first-child', // table cells (Symphony Tools extension's table)
     '.table-auto tr td:first-child', // table cells
     '.table-auto tr th', // backtest historical allocations table
-    '.blk--asset' // symphony details and edit page rule block assets
+    '.blk--subsym', // symphony details and edit page group title
+    '.blk--function', // symphony details and edit page rule block if/else functions
+    '.blk--asset', // symphony details and edit page rule block assets
+  ];
+
+  // invalid tickers that may be picked up by the regex
+  const ignoredTickers = [
+    'IF',
+    'ELSE',
+    'THEN',
+    'WEIGHT',
+    'U.S',
+    'ETF',
   ];
 
   //----------------------------------------------
-
-  let lastTickerHovered = null;
 
   let tickerCache = {};
   try {
     tickerCache = JSON.parse(localStorage.getItem('tickerCache')) || {};
   } catch (e) {
     log('Error parsing ticker cache', e);
+  }
+
+  function eq(obj1, obj2) {
+    return JSON.stringify(obj1) === JSON.stringify(obj2);
   }
 
   function createOrGetTooltip(event) {
@@ -50,10 +64,11 @@
     }
   }
 
+  let lastTickersFromElement = null;
   function getTickersFromElement(tickerElement) {
     let matches;
 
-    const TICKER_REGEX = /\b[A-Z0-9\.]{1,6}\b/g; // do we need to include numbers?
+    const TICKER_REGEX = /\b[A-Z][A-Z0-9\.]{1,6}\b/g; // do we need to include numbers?
     const ignoredTextContents = [
       'Cash Remainder',
       'US Dollar',
@@ -62,17 +77,20 @@
     const parentElement = tickerElement?.closest(tickerParentSelectors.join(', '));
     if (parentElement) {
       const isIgnored = ignoredTextContents.some(
-        text => tickerElement?.textContent?.match(text, 'gi')
+        text => tickerElement?.innerText?.match(text, 'gi')
       );
       if (!isIgnored) {
-        matches = tickerElement?.textContent?.match(TICKER_REGEX);
+        matches = tickerElement?.innerText?.match(TICKER_REGEX);
       }
     }
-    return matches ? matches?.map(match => match.trim().toUpperCase()) : [];
+    const tickers = matches ? matches?.map(match => match.trim().toUpperCase()) : [];
+    const filteredTickers = tickers.filter(ticker => !ignoredTickers.includes(ticker));
+    const uniqueTickers = Array.from(new Set(filteredTickers));
+    return uniqueTickers;
   }
 
-  function showTooltip(ticker, event) {
-    if (!ticker) {
+  function showTooltip(tickers, event) {
+    if (!tickers?.length) {
       setToolTipVisible(false);
       return;
     }
@@ -82,48 +100,62 @@
     setToolTipVisible(true);
     tooltip.innerHTML = '<div class="spinner"></div>'; // Spinner while loading
 
-    // Prepare the data to send in the request body
-    const requestData = {
-      tickers: [
-        `EQUITIES::${ticker}//USD`
-      ]
-    };
-
-    let dataPromise;
-    if (tickerCache[ticker]) {
-      dataPromise = Promise.resolve(tickerCache[ticker]);
-    } else {
-      dataPromise = fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      }).then(
-        response => response.json()
+    let dataPromises = [];
+    tickers.forEach(ticker => {
+      const isCached = (
+        tickerCache[ticker] && 
+        Date.now() < tickerCache[ticker].expires
       );
-    }
+      if (isCached) {
+        const resolvedData = tickerCache[ticker];
+        dataPromises.push(Promise.resolve(resolvedData));
+      } else {
+        tickerCache[ticker] = [{name: 'Loading...'}]; // prevent multiple requests
+        dataPromises.push(fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            tickers: [`EQUITIES::${ticker}//USD`]
+          })
+        }).then(
+          response => response.json()
+        ).then(result=>{
+          // normalize the data
+          const filteredData = Object.entries(result).filter(([key, value]) => {
+            return (ticker === 'USD' && key === '$USD') || key !== `$USD` // for some reason USD is included in every response
+          }).reduce((data, [key, value]) => {
+            return {...data, ...value, key}; // flatten the object
+          }, {});
 
-    dataPromise.then(data => {
-      const filteredData = Object.entries(data).filter(
-        ([key, value]) => key !== `$USD`
-      ).map(([key, value]) => {
-        return {...value, key}
+          const expires = Date.now() + 1000 * 60 * 60 * 24; // cache for 24 hours
+          return {data: filteredData, ticker, expires};
+        }));
+      }
+    });
+
+    Promise.all(dataPromises).then(results => {
+      // Update the cache
+      results.forEach((item, index) => {
+        const {ticker} = item;
+        tickerCache[ticker] = item;
       });
-      let name = filteredData[0]?.name;
-
-      // Cache the data
-      tickerCache[ticker] = filteredData;
       localStorage.setItem('tickerCache', JSON.stringify(tickerCache));
 
-      // if the first item is USD, then the requested ticker was not found
-      if (!name || !lastTickerHovered) {
+      if (!lastTickersFromElement?.length) { // are we still hovering an item?
         setToolTipVisible(false);
-      } else if(ticker === lastTickerHovered) {
-        tooltip.innerHTML = `<div class="tooltip-content"><strong>${ticker}:</strong> ${name}</div>`;
+      } else if(eq(tickers, lastTickersFromElement)) {
+        let html = '';
+        tickers.forEach(ticker => {
+          const {data} = tickerCache[ticker];
+          if (data) {
+            html += `<div class="tooltip-content"><strong>${ticker}:</strong> ${data?.name || 'No data'}</div>`;
+          }
+        });
+
+        tooltip.innerHTML = html;
       }
     }).catch(error => {
-      tooltip.innerHTML = `<div class="tooltip-content"><strong>${ticker}:</strong> Error loading info</div>`;
+      tooltip.innerHTML = `<div class="tooltip-content"><strong>${tickers}:</strong> Error loading info</div>`;
     });
   }
   const debouncedShowTooltip = _.debounce(showTooltip, 500); // should be long enough for content to load so that cache can be used
@@ -132,15 +164,26 @@
     const elementFromPoint = document.elementFromPoint(event.clientX, event.clientY);
     const tickers = getTickersFromElement(elementFromPoint);
     if (tickers?.length) {
-      if (tickers[0] === lastTickerHovered) {
-        debouncedShowTooltip(tickers[0], event);
+      if (event.type === 'click') {
+        // if the user clicks while holding the command key, open the details page
+        if (event.metaKey) {
+          event.preventDefault();
+          event.stopPropagation();
+          tickers.forEach((ticker, index) => {
+            setTimeout(()=>{
+              window.open(`https://finance.yahoo.com/quote/${ticker}/profile/`, '_blank');
+            }, index * 1000);
+          });
+        }
+      } else if (eq(tickers, lastTickersFromElement)) {
+        debouncedShowTooltip(tickers, event);
       } else {
-        showTooltip(tickers[0], event);
+        showTooltip(tickers, event);
       }
-      lastTickerHovered = tickers[0];
+      lastTickersFromElement = tickers;
     } else {
       setToolTipVisible(false);
-      lastTickerHovered = null;
+      lastTickersFromElement = null;
     }
   }
   const debouncedCheckTicker = _.debounce(checkTicker, 10);
@@ -149,6 +192,8 @@
   function initLiveTickerTooltip() {
     // Handle mousemove events to check for ticker text and show tooltips
     document.addEventListener('mousemove', debouncedCheckTicker);
+    // Handle mouse click events to open the details page
+    document.addEventListener('click', debouncedCheckTicker);
   }
 
   initLiveTickerTooltip();

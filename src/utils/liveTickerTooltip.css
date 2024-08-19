@@ -11,6 +11,12 @@
 .liveTickerTooltip.hidden {
   display: none;
 }
+.liveTickerTooltip .tooltip-content:last-child {
+  margin-top: 8px;
+}
+.liveTickerTooltip .tooltip-content:first-child {
+  margin-top: 0;
+}
 
 .spinner {
   border: 4px solid rgba(0,0,0,0.1);
