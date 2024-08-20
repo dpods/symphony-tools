@@ -98,6 +98,7 @@ const jsLib = [
   "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.3/jquery-ui.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/css/selectize.default.min.css",
   "https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js",
+  "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",
 ]
 
 
