@@ -29,30 +29,19 @@
     {
       "matches": ["https://app.composer.trade/*"],
       "js": [
-        "common.js",
+        "fetchAuth.js",
         "lib/jslib/lodash.min.js",
         "utils/liveTickerTooltip.js"
       ],
       "world": "MAIN",
       "css": [
-        "utils/liveTickerTooltip.css"
-      ]
-    },
-    {
-      "matches": [
-        "https://app.composer.trade/*"
-      ],
-      "js": [
-        "fetchAuth.js"
-      ],
-      "css": [
+        "utils/liveTickerTooltip.css",
         "utils/additional.css"
       ]
     },
     {
       "matches": ["https://app.composer.trade/*"],
-      "js": ["fetchAuth.js"],
-      "world": "MAIN"
+      "js": ["contentScriptBootstrap.js"]
     }
   ],
   "externally_connectable": {
