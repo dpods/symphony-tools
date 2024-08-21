@@ -1,54 +1,44 @@
-# symphony-tools
-Chrome Extension that provides tools and enhancements to the Composer.trade user interface.
+# composer-quant-tools
+Chrome Extension that provides quantstats and enhancements to the Composer.trade user interface.
+
+There is some kinda unique magic here where we use python in a service worker to run quantstats locally in your browser.
+We generate Tearsheets in browser and build a blob url. These links are held in cache in your browser until your session on composer.trade closes.
 
 ### Features
-- Symphony Editor
-  - Search and replace for assets and if/else logic in a Symphony
-  - Remove metadata from a Symphony
-  - Copy JSON / EDN
 - Portfolio
-  - Aggregate holdings and allocations across all symphonies
-  - Display broker type for account (Alpaca/Apex)
+  - Display quant stats for live symphonies
+  - Build Tearsheets in context for individual symphonies. Live, OOS, and full Backtest
+  - Inline tooltips for describing tickers
 
-Aggregate Holdings
-![Symphony Tools Extension - Portfolio](docs/images/portfolio.png)
+Ticker Tooltip
+![Composer Quant Tools - Ticker Tooltip](docs/images/ticker-tooltip.png)
 
-Symphony Editor
-![Symphony Tools Extension - Symphony Editor](docs/images/symphony-editor.png)
+Portfolio Quant Stats
+![Composer Quant Tools - Portfolio headers](docs/images/selectable-headers.png)
+![Composer Quant Tools - Portfolio List](docs/images/portfolio-quantstats.png)
+
+Quant Stats Tearsheets
+![Composer Quant Tools - Portfolio List](docs/images/inline-tearsheet-building.png)
+![Composer Quant Tools - Portfolio List](docs/images/inline-tearsheet-blob-link.png)
+
+### Installation Requirements
+
+1. npm (this must be installed)
 
 ### Installation
 
-#### Chrome Web Store
-The easiest way to install the extension is through the Chrome Web Store.
-
-1. Go to https://chromewebstore.google.com/detail/symphony-tools-extension/gbmghoigiaomcfnnoijngbdnglpifbkk
-2. Click "Add to Chrome"
-3. If you have the composer site open in your browser, refresh the page so the widget can load. 
-4. Where to find the widgets
-    1. In the Symphony editor, the widget should appear on the sidebar under the Watch/Share buttons.
-    2. In the portfolio view, the widget should appear at the bottom of the page under all your live symphonies
-
 #### Manual Installation
-1. Go to the latest release and download the .zip file
-    https://github.com/dpods/symphony-tools/releases/latest
-2. Unzip the contents 
-3. In Chrome, navigate to [chrome://extensions](chrome://extensions/) in the URL bar
-4. Run "npm run setup"
+1. clone the project
+2. open the folder
+3. Run "npm run setup" in the cloned folder (this will download pyodide and a bunch of python libraries to bundle in the extension... thanks manifest v3...)
+4. In Chrome, navigate to [chrome://extensions](chrome://extensions/) in the URL bar
+5. Enable the developer toggle (top right corner)
 5. Click the **Load unpacked** button and select the `src` folder (where the `manifest.json` file is).
 6. If you have the composer site open in your browser, refresh the page so the widget can load.
-7. Where to find the widgets
-   1. In the Symphony editor, the widget should appear on the sidebar under the Watch/Share buttons. 
-   2. In the portfolio view, the widget should appear at the bottom of the page under all your live symphonies
 
 
 ### Troubleshooting
 
-Failed to load extension
+There are lots of bugs currently. So if you are having issues after loading the unpacked extension. The best thing to try is to go to your portfolio page and refresh the browser. Then refresh other pages you are on. This is due to how the api token is shared between windows.
 
-**Manifest file is missing or unreadable** - Make sure you've unzipped the file. After clicking "Load unpacked" on the extensions page, navigate to the unzipped folder and click "Select"
-
-### Donate
-
-Donations are welcome but not necessary. If you find this tool useful and would like to support further development of new features you can donate here.
-
-<a href="https://www.buymeacoffee.com/dpods" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+I have also found that there can be some pretty big DOM differences between what feature flags are enabled for your user. So some of those are hard to work around.

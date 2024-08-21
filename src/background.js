@@ -1,47 +1,72 @@
-let pyodideReadyPromise
+let pyodideReadyPromise;
 
 async function loadPyodideAndPackages() {
-  importScripts(chrome.runtime.getURL('/lib/pyodide/pyodide.js'));
+  importScripts(chrome.runtime.getURL("/lib/pyodide/pyodide.js"));
   self.pyodide = await loadPyodide({
-    indexURL: chrome.runtime.getURL('/lib/pyodide/'),
+    indexURL: chrome.runtime.getURL("/lib/pyodide/"),
   });
   await pyodide.loadPackage("pandas");
-  await pyodide.loadPackage('micropip');
-  await pyodide.loadPackage('ipython');
-  await pyodide.loadPackage('openblas');
-  await pyodide.loadPackage( "/lib/pyodide/QuantStats-0.0.62-py2.py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/tabulate-0.9.0-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/yfinance-0.2.40-py2.py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/seaborn-0.13.2-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/platformdirs-4.2.2-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/frozendict-2.4.4-py312-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/multitasking-0.0.11-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl");
-  await pyodide.loadPackage( "/lib/pyodide/cycler-0.12.1-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/fonttools-4.51.0-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/kiwisolver-1.4.5-cp312-cp312-pyodide_2024_0_wasm32.whl");
-  await pyodide.loadPackage( "/lib/pyodide/pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-  await pyodide.loadPackage( "/lib/pyodide/pyparsing-3.1.2-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/matplotlib_pyodide-0.2.2-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/scipy-1.12.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-  await pyodide.loadPackage( "/lib/pyodide/requests-2.31.0-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/charset_normalizer-3.3.2-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/idna-3.7-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/urllib3-2.2.1-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/certifi-2024.2.2-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/beautifulsoup4-4.12.3-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/soupsieve-2.5-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/peewee-3.17.3-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/cffi-1.16.0-cp312-cp312-pyodide_2024_0_wasm32.whl");
-  await pyodide.loadPackage( "/lib/pyodide/pycparser-2.22-py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/lxml-5.2.1-cp312-cp312-pyodide_2024_0_wasm32.whl");
-  await pyodide.loadPackage( "/lib/pyodide/html5lib-1.1-py2.py3-none-any.whl");
-  await pyodide.loadPackage( "/lib/pyodide/webencodings-0.5.1-py2.py3-none-any.whl");
+  await pyodide.loadPackage("micropip");
+  await pyodide.loadPackage("ipython");
+  await pyodide.loadPackage("openblas");
+  await pyodide.loadPackage(
+    "/lib/pyodide/QuantStats-0.0.62-py2.py3-none-any.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/tabulate-0.9.0-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/yfinance-0.2.40-py2.py3-none-any.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/seaborn-0.13.2-py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/platformdirs-4.2.2-py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/frozendict-2.4.4-py312-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/multitasking-0.0.11-py3-none-any.whl",
+  );
+  await pyodide.loadPackage(
+    "/lib/pyodide/matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/cycler-0.12.1-py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/fonttools-4.51.0-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/kiwisolver-1.4.5-cp312-cp312-pyodide_2024_0_wasm32.whl",
+  );
+  await pyodide.loadPackage(
+    "/lib/pyodide/pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/pyparsing-3.1.2-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/matplotlib_pyodide-0.2.2-py3-none-any.whl",
+  );
+  await pyodide.loadPackage(
+    "/lib/pyodide/scipy-1.12.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/requests-2.31.0-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/charset_normalizer-3.3.2-py3-none-any.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/idna-3.7-py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/urllib3-2.2.1-py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/certifi-2024.2.2-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/beautifulsoup4-4.12.3-py3-none-any.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/soupsieve-2.5-py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/peewee-3.17.3-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/cffi-1.16.0-cp312-cp312-pyodide_2024_0_wasm32.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/pycparser-2.22-py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/lxml-5.2.1-cp312-cp312-pyodide_2024_0_wasm32.whl",
+  );
+  await pyodide.loadPackage("/lib/pyodide/html5lib-1.1-py2.py3-none-any.whl");
+  await pyodide.loadPackage(
+    "/lib/pyodide/webencodings-0.5.1-py2.py3-none-any.whl",
+  );
   return pyodide;
 }
 
-pyodideReadyPromise = loadPyodideAndPackages()
-
+pyodideReadyPromise = loadPyodideAndPackages();
 
 async function getTearsheetHtml(symphony, series_data, type, backtestData) {
   // series_data is an object with the following structure
@@ -51,38 +76,47 @@ async function getTearsheetHtml(symphony, series_data, type, backtestData) {
   //   "deposit_adjusted_series":[200]
   // }
 
-  if (type === 'backtest') {
-    series_data = {deposit_adjusted_series:[],epoch_ms:[]}
-    Object.entries(backtestData.dvm_capital[symphony.id]).forEach(([day,amount])=>{
-      series_data.epoch_ms.push(day*24 * 60 * 60 * 1000)
-      series_data.deposit_adjusted_series.push(amount)
-    })
-  } else if (type === 'oos') {
-    const oosStartDate = new Date(symphony.last_semantic_update_at.split('[')[0]) // this is removing the timezone
-    series_data = {deposit_adjusted_series:[],epoch_ms:[]}
-    Object.entries(backtestData.dvm_capital[symphony.id]).forEach(([day,amount])=>{
-      if (oosStartDate >= new Date(day*24 * 60 * 60 * 1000)) { return }
-      series_data.epoch_ms.push(day*24 * 60 * 60 * 1000)
-      series_data.deposit_adjusted_series.push(amount)
-    })
+  if (type === "backtest") {
+    series_data = { deposit_adjusted_series: [], epoch_ms: [] };
+    Object.entries(backtestData.dvm_capital[symphony.id]).forEach(
+      ([day, amount]) => {
+        series_data.epoch_ms.push(day * 24 * 60 * 60 * 1000);
+        series_data.deposit_adjusted_series.push(amount);
+      },
+    );
+  } else if (type === "oos") {
+    const oosStartDate = new Date(
+      symphony.last_semantic_update_at.split("[")[0],
+    ); // this is removing the timezone
+    series_data = { deposit_adjusted_series: [], epoch_ms: [] };
+    Object.entries(backtestData.dvm_capital[symphony.id]).forEach(
+      ([day, amount]) => {
+        if (oosStartDate >= new Date(day * 24 * 60 * 60 * 1000)) {
+          return;
+        }
+        series_data.epoch_ms.push(day * 24 * 60 * 60 * 1000);
+        series_data.deposit_adjusted_series.push(amount);
+      },
+    );
   }
   // if type is live then we don't need to do anything since the series_data is already in the correct format
 
-  if(series_data.epoch_ms.length <= 1) {
-    return {error: `Symphony_name:${symphony.name} Symphony_id:${symphony.id} Not enough data to calculate tearsheet report`};
+  if (series_data.epoch_ms.length <= 1) {
+    return {
+      error: `Symphony_name:${symphony.name} Symphony_id:${symphony.id} Not enough data to calculate tearsheet report`,
+    };
   }
-  let previousValue = series_data.deposit_adjusted_series[0]
-  series_data.returns = series_data.deposit_adjusted_series.map((point)=>{
-    const thisValue = (point - previousValue) / previousValue
-    previousValue = point
-    return thisValue
-  })
+  let previousValue = series_data.deposit_adjusted_series[0];
+  series_data.returns = series_data.deposit_adjusted_series.map((point) => {
+    const thisValue = (point - previousValue) / previousValue;
+    previousValue = point;
+    return thisValue;
+  });
 
-  
   pyodideReadyPromise = pyodideReadyPromise || loadPyodideAndPackages();
   let pyodide = await pyodideReadyPromise;
   try {
-      let tearsheetHtml = await pyodide.runPythonAsync(`
+    let tearsheetHtml = await pyodide.runPythonAsync(`
 
         import quantstats as qs
         import pandas as pd
@@ -123,15 +157,13 @@ async function getTearsheetHtml(symphony, series_data, type, backtestData) {
         html_report_content
 
       `);
-      
-      return tearsheetHtml;
+
+    return tearsheetHtml;
   } catch (err) {
-      console.error(err);
-      return {error:"An error occurred: " + err.message};
+    console.error(err);
+    return { error: "An error occurred: " + err.message };
   }
 }
-
-
 
 async function getQuantStats(symphony, series_data) {
   // series_data is an object with the following structure
@@ -140,20 +172,22 @@ async function getQuantStats(symphony, series_data) {
   //   "series":[198.9],
   //   "deposit_adjusted_series":[200]
   // }
-  if(symphony.dailyChanges.epoch_ms.length <= 1) {
-    return {error: `Symphony_name:${symphony.name} Symphony_id:${symphony.id} Not enough data to calculate QuantStats`};
+  if (symphony.dailyChanges.epoch_ms.length <= 1) {
+    return {
+      error: `Symphony_name:${symphony.name} Symphony_id:${symphony.id} Not enough data to calculate QuantStats`,
+    };
   }
-  let previousValue = series_data.deposit_adjusted_series[0]
-  series_data.returns = series_data.deposit_adjusted_series.map((point)=>{
-    const thisValue = (point - previousValue) / previousValue
-    previousValue = point
-    return thisValue
-  })
-  
+  let previousValue = series_data.deposit_adjusted_series[0];
+  series_data.returns = series_data.deposit_adjusted_series.map((point) => {
+    const thisValue = (point - previousValue) / previousValue;
+    previousValue = point;
+    return thisValue;
+  });
+
   pyodideReadyPromise = pyodideReadyPromise || loadPyodideAndPackages();
   let pyodide = await pyodideReadyPromise;
   try {
-      let output = await pyodide.runPythonAsync(`
+    let output = await pyodide.runPythonAsync(`
 
         import quantstats as qs
         import pandas as pd
@@ -184,23 +218,23 @@ async function getQuantStats(symphony, series_data) {
         json.dumps({'quantstats_metrics':quantstats_metrics, 'quantstats_months':quantstats_months, 'quantstats_drawdown_details': quantstats_drawdown_details})
 
       `);
-      
-      return output.replace(/NaN/g, "\"NaN\"");
+
+    return output.replace(/NaN/g, '"NaN"');
   } catch (err) {
-      console.error(err);
-      return {error:"An error occurred: " + err.message};
+    console.error(err);
+    return { error: "An error occurred: " + err.message };
   }
 }
 
-
-
-chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
-  if (request.action === "onToken") {
-    const expiry = Date.now() + 10 * 60 * 1000;
-    // save the token in session and refresh it every 10 minutes
-    chrome.storage.local.set({tokenInfo: {token:request.token, expiry}});
-  }
-});
+chrome.runtime.onMessageExternal.addListener(
+  (request, sender, sendResponse) => {
+    if (request.action === "onToken") {
+      const expiry = Date.now() + 10 * 60 * 1000;
+      // save the token in session and refresh it every 10 minutes
+      chrome.storage.local.set({ tokenInfo: { token: request.token, expiry } });
+    }
+  },
+);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("Received message", request);
@@ -209,8 +243,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const symphony = request?.symphony;
 
     console.log("Getting QuantStats");
-    console.log('sym', symphony);
-    console.log('dc',symphony?.dailyChanges);
+    console.log("sym", symphony);
+    console.log("dc", symphony?.dailyChanges);
 
     // cache the result in chrome.storage.local for 3 hours. check if the cache is still valid
     const cacheKey = `quantstats_${symphony.id}`;
@@ -220,11 +254,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log("Returning cached result");
         sendResponse(cache[cacheKey].value);
       } else {
-        getQuantStats(
-          symphony,
-          symphony?.dailyChanges
-        ).then((quantStats)=>{
-          chrome.storage.local.set({[cacheKey]: {value: quantStats, expiry: cacheExpiry}});
+        getQuantStats(symphony, symphony?.dailyChanges).then((quantStats) => {
+          chrome.storage.local.set({
+            [cacheKey]: { value: quantStats, expiry: cacheExpiry },
+          });
           sendResponse(quantStats);
         });
       }
@@ -244,8 +277,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const backtestData = request?.backtestData;
 
     console.log("Getting TearsheetBlobUrl");
-    console.log('sym', symphony);
-    console.log('dc',symphony?.dailyChanges);
+    console.log("sym", symphony);
+    console.log("dc", symphony?.dailyChanges);
 
     // cache the result in chrome.storage.local for 3 hours. check if the cache is still valid
     const cacheKey = `tearsheeturl_${request?.type}_${symphony.id}`;
@@ -259,9 +292,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           symphony,
           symphony?.dailyChanges,
           request?.type,
-          backtestData
-        ).then((TearsheetHtml)=>{
-          chrome.storage.local.set({[cacheKey]: {value: TearsheetHtml, expiry: cacheExpiry}});
+          backtestData,
+        ).then((TearsheetHtml) => {
+          chrome.storage.local.set({
+            [cacheKey]: { value: TearsheetHtml, expiry: cacheExpiry },
+          });
           sendResponse(TearsheetHtml);
         });
       }

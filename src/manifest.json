@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Symphony Tools Extension",
+  "name": "Composer Quant Tools",
   "description": "Utility extension that makes working with Composer Symphonies easier",
-  "version": "2.3.0",
+  "version": "1.0.0",
   "background": {
     "service_worker": "background.js"
   },
@@ -17,7 +17,7 @@
     "128": "images/icon128.png"
   },
   "action": {
-    "default_title": "Symphony Tools",
+    "default_title": "Composer Quant Tools",
     "default_icon": {
       "16": "images/icon16.png",
       "48": "images/icon48.png",
@@ -29,45 +29,25 @@
     {
       "matches": ["https://app.composer.trade/*"],
       "js": [
-        "common.js",
+        "fetchAuth.js",
         "lib/jslib/lodash.min.js",
         "utils/liveTickerTooltip.js"
       ],
       "world": "MAIN",
       "css": [
-        "utils/liveTickerTooltip.css"
-      ]
-    },
-    {
-      "matches": ["https://app.composer.trade/symphony/*"],
-      "js": [
-        "symphony.js"
-      ],
-      "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://app.composer.trade/*"
-      ],
-      "js": [
-        "utils/sortable.js",
-        "utils/tokenAndAccountUtil.js",
-        "utils/liveSymphonyPerformance.js",
-        "utils/factsheet.js",
-        "portfolio.js"
-      ],
-      "css": [
+        "utils/liveTickerTooltip.css",
         "utils/additional.css"
       ]
     },
     {
       "matches": ["https://app.composer.trade/*"],
-      "js": ["fetchAuth.js"],
-      "world": "MAIN"
+      "js": ["contentScriptBootstrap.js"]
     }
   ],
   "externally_connectable": {
-    "ids": ["*"],
+    "ids": [
+      "*"
+    ],
     "matches": [
       "https://app.composer.trade/*"
     ],
@@ -76,8 +56,19 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
-  "web_accessible_resources": [{
-    "resources": ["utils/*", "lib/*", "popup.js"],
-    "matches": ["<all_urls>"]
-  }]
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*",
+        "utils/*",
+        "lib/*",
+        "popup.js",
+        "init.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ],
+      "type": "module"
+    }
+  ]
 }

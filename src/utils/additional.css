@@ -1,20 +1,25 @@
-[data-sortable-initialized] th[data-sorted] svg {display:none}
-
-[data-sortable-initialized] th[data-sorted=true][data-sorted-direction=ascending] {
-    color: rgba(16, 21, 22, 0.6);
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="rgba(16, 21, 22, 0.6)" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"></rect><path d="M215.4,92.9A8,8,0,0,0,208,88H48a8,8,0,0,0-7.4,4.9,8.4,8.4,0,0,0,1.7,8.8l80,80a8.2,8.2,0,0,0,11.4,0l80-80A8.4,8.4,0,0,0,215.4,92.9Z"></path></svg>');
-    background-position: right 30px bottom 11px;
-    background-repeat: no-repeat;  
+[data-sortable-initialized] th[data-sorted] svg {
+  display: none;
 }
 
-[data-sortable-initialized] th[data-sorted=true][data-sorted-direction=descending] {
+[data-sortable-initialized]
+  th[data-sorted="true"][data-sorted-direction="ascending"] {
+  color: rgba(16, 21, 22, 0.6);
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="rgba(16, 21, 22, 0.6)" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"></rect><path d="M215.4,92.9A8,8,0,0,0,208,88H48a8,8,0,0,0-7.4,4.9,8.4,8.4,0,0,0,1.7,8.8l80,80a8.2,8.2,0,0,0,11.4,0l80-80A8.4,8.4,0,0,0,215.4,92.9Z"></path></svg>');
+  background-position: right 30px bottom 11px;
+  background-repeat: no-repeat;
+}
+
+[data-sortable-initialized]
+  th[data-sorted="true"][data-sorted-direction="descending"] {
   color: rgba(16, 21, 22, 0.6);
   background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="rgba(16, 21, 22, 0.6)" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"></rect><path d="M213.7,154.3l-80-80a8.1,8.1,0,0,0-11.4,0l-80,80a8.4,8.4,0,0,0-1.7,8.8A8,8,0,0,0,48,168H208a8,8,0,0,0,7.4-4.9A8.4,8.4,0,0,0,213.7,154.3Z"></path></svg>');
   background-position: right 30px bottom 11px;
-  background-repeat: no-repeat;  
+  background-repeat: no-repeat;
 }
 
-#app table[data-sortable-initialized="true"] tr > th:first-child, td:first-child {
+#app table[data-sortable-initialized="true"] tr > th:first-child,
+td:first-child {
   position: sticky;
   left: 0;
   border-right: 1px solid #cfcfcf;
