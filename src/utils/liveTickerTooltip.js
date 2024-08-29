@@ -68,7 +68,7 @@
   function getTickersFromElement(tickerElement) {
     let matches;
 
-    const TICKER_REGEX = /\b[A-Z][A-Z0-9\.]{1,6}\b/g; // do we need to include numbers?
+    const TICKER_REGEX = /\b[A-Z][A-Z0-9\.\/]{1,6}\b/g; // do we need to include numbers?
     const ignoredTextContents = [
       'Cash Remainder',
       'US Dollar',
