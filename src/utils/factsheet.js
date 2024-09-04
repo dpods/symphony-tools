@@ -292,6 +292,10 @@ async function getSymphonyIdFromName(symphonyName) {
       symphonyName.replace("  ", " ") // this is a weird discrepancy between the symphony name and the factsheet name there are extra double spaces
     )
   );
+  if (!symphony) {
+    log(`Symphony ${symphonyName} not found`);
+    return;
+  }
   return symphony.id;
 }
 

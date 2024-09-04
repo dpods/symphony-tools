@@ -72,7 +72,7 @@ async function getAccount(token) {
   } catch (error) {
     console.error(
       "[composer-quant-tools]: Unable to detect account type with:",
-      data,
+      data
     );
   }
 }

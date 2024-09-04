@@ -280,26 +280,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("sym", symphony);
     console.log("dc", symphony?.dailyChanges);
 
-    // cache the result in chrome.storage.local for 3 hours. check if the cache is still valid
-    const cacheKey = `tearsheeturl_${request?.type}_${symphony.id}`;
-    const cacheExpiry = Date.now() + 3 * 60 * 60 * 1000;
-    chrome.storage.local.get(cacheKey, (cache) => {
-      if (cache[cacheKey] && cache[cacheKey].expiry > Date.now()) {
-        console.log("Returning cached result");
-        sendResponse(cache[cacheKey].value);
-      } else {
-        getTearsheetHtml(
-          symphony,
-          symphony?.dailyChanges,
-          request?.type,
-          backtestData,
-        ).then((TearsheetHtml) => {
-          chrome.storage.local.set({
-            [cacheKey]: { value: TearsheetHtml, expiry: cacheExpiry },
-          });
-          sendResponse(TearsheetHtml);
-        });
-      }
+    getTearsheetHtml(
+      symphony,
+      symphony?.dailyChanges,
+      request?.type,
+      backtestData,
+    ).then((TearsheetHtml) => {
+      chrome.storage.local.set({
+        [cacheKey]: { value: TearsheetHtml, expiry: cacheExpiry },
+      });
+      sendResponse(TearsheetHtml);
     });
 
     return true; // Indicates we will send a response asynchronously

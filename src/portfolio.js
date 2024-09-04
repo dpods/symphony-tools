@@ -36,17 +36,18 @@ export const startObserver = async () => {
   ) {
     const mainEl = document.getElementsByTagName("main")[0];
     const mainTable = document.querySelectorAll("table.min-w-full")[0];
-    const mainTableContent = document.querySelectorAll(
-      "table.min-w-full td",
-    )[0];
+    const mainTableContent = document.querySelectorAll("table.min-w-full td")[0];
+    const portfolioChart = document.querySelector('[data-highcharts-chart], .border-graph-axislines');
+
     if (mainEl) {
       await getTokenAndAccount(); // this is to cache the token and account
     }
-    if (mainTableContent && !symphonyPerformanceSyncActive) {
+    if (portfolioChart && mainTableContent && !symphonyPerformanceSyncActive) {
       symphonyPerformanceSyncActive = true;
       startSymphonyPerformanceSync(mainTable);
     }
     if (symphonyPerformanceSyncActive) {
+      symphonyPerformanceSyncActive = false;
       mutationInstance.disconnect();
     }
   });
@@ -55,6 +56,7 @@ export const startObserver = async () => {
 
 const startSymphonyPerformanceSync = async (mainTable) => {
   const mainTableBody = mainTable.querySelectorAll("tbody")[0];
+  const mainTableHead = mainTable.querySelectorAll("thead")[0];
   updateColumns(mainTable, extraColumns);
   getSymphonyPerformanceInfo({
     onSymphonyCallback: extendSymphonyStatsRow,
@@ -64,17 +66,33 @@ const startSymphonyPerformanceSync = async (mainTable) => {
     Sortable.initTable(mainTable);
   });
 
-  let timeout;
-  const observer = new MutationObserver(async function (
+
+  // this does not seem to work
+  // let headTimeout;
+  // const headObserver = new MutationObserver(async function (
+  //   mutations,
+  //   mutationInstance,
+  // ) {
+  //   // run extendSymphonyStatsRow for each symphony but only at a max of once per second using a timeout to make sure it runs at least once per second
+  //   clearTimeout(headTimeout);
+  //   headTimeout = setTimeout(()=> updateColumns(mainTable, extraColumns), 200);
+  //   log("headObserver triggered");
+  // });
+  // headObserver.observe(mainTableHead, { childList: true, subtree: true });
+
+
+  // rows
+  let rowObserverTimeout;
+  const rowObserver = new MutationObserver(async function (
     mutations,
     mutationInstance,
   ) {
     // run extendSymphonyStatsRow for each symphony but only at a max of once per second using a timeout to make sure it runs at least once per second
-    clearTimeout(timeout);
-    timeout = setTimeout(updateTableRows, 200);
-    log("observer triggered");
+    clearTimeout(rowObserverTimeout);
+    rowObserverTimeout = setTimeout(updateTableRows, 200);
+    log("rowObserver triggered");
   });
-  observer.observe(mainTableBody, { childList: true, subtree: true });
+  rowObserver.observe(mainTableBody, { childList: true, subtree: true });
 };
 
 function updateTableRows() {
@@ -307,10 +325,4 @@ export function initPortfolio() {
     }
   });
 
-  // window.portfolio = {
-  //     getSymphonyPerformanceInfo,
-  //     getSymphonyDailyChange,
-  //     getSymphonyStatsMeta,
-  //     performanceData
-  // }
 }
