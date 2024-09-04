@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Composer Quant Tools",
   "description": "Utility extension that makes working with Composer Symphonies easier",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "background": {
     "service_worker": "background.js"
   },

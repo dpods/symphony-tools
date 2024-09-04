@@ -286,9 +286,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       request?.type,
       backtestData,
     ).then((TearsheetHtml) => {
-      chrome.storage.local.set({
-        [cacheKey]: { value: TearsheetHtml, expiry: cacheExpiry },
-      });
       sendResponse(TearsheetHtml);
     });
 
