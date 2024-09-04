@@ -22,9 +22,9 @@ const incrementVersion = (version, buildType) => {
     }
 }
 
-const updatePackageVersion = (newVersion, packageJson) => {
+const updatePackageVersion = async (newVersion, packageJson) => {
     packageJson.version = newVersion
-    writeJSON('../package.json', packageJson)
+    await execPromise(`npm version ${newVersion} --no-git-tag-version`)
 }
 
 const updateExtensionVersion = (newVersion) => {
@@ -45,7 +45,7 @@ const createZipArchive = (name, version) => {
     }
 }
 
-const createGitTag = async (version) => {
+const createGitTagAndPushNewCommit = async (version) => {
     await execPromise(`git add .`);
     await execPromise(`git commit -m "v${version}"`);
     await execPromise(`git tag -a v${version} -m "v${version}"`);
@@ -59,8 +59,8 @@ const createGitTag = async (version) => {
     const releaseType = process.argv[2]
     const packageJson = readJSON('../package.json')
     const newVersion = incrementVersion(packageJson.version, releaseType)
-    // updatePackageVersion(newVersion, packageJson)
-    // updateExtensionVersion(newVersion)
+    updateExtensionVersion(newVersion)
+    await updatePackageVersion(newVersion, packageJson)
     createZipArchive(packageJson.name, newVersion)
-    // await createGitTag(newVersion)
+    await createGitTagAndPushNewCommit(newVersion)
 })()
