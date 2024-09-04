@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Composer Quant Tools",
   "description": "Utility extension that makes working with Composer Symphonies easier",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "background": {
     "service_worker": "background.js"
   },
@@ -27,7 +27,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://app.composer.trade/*"],
+      "matches": [
+        "https://app.composer.trade/*"
+      ],
       "js": [
         "fetchAuth.js",
         "lib/jslib/lodash.min.js",
@@ -40,8 +42,12 @@
       ]
     },
     {
-      "matches": ["https://app.composer.trade/*"],
-      "js": ["contentScriptBootstrap.js"]
+      "matches": [
+        "https://app.composer.trade/*"
+      ],
+      "js": [
+        "contentScriptBootstrap.js"
+      ]
     }
   ],
   "externally_connectable": {
