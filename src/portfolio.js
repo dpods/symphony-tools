@@ -5,7 +5,18 @@ import {
 } from "./utils/liveSymphonyPerformance.js";
 import {log} from "./utils/logger.js";
 
-let extraColumns = [];
+let extraColumns = [
+  "Running Days",
+  "Avg. Daily Return",
+  "MTD",
+  "3M",
+  "6M",
+  "YTD",
+  "1Y",
+  "Win Days",
+  "Best Day",
+  "Worst Day",  
+];
 export const performanceData = {};
 window.symphonyTools = {
   performanceData,
@@ -14,8 +25,10 @@ window.symphonyTools = {
 let symphonyPerformanceSyncActive = false;
 
 chrome.storage.local.get(["addedColumns"], function (result) {
-  extraColumns = result?.addedColumns || [];
-  log("extraColumns loaded:", extraColumns);
+  if (result?.addedColumns?.length) {
+    extraColumns = result?.addedColumns || [];
+    log("extraColumns loaded:", extraColumns);
+  }
 });
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -34,15 +47,15 @@ export const startObserver = async () => {
     mutations,
     mutationInstance,
   ) {
-    const mainEl = document.getElementsByTagName("main")[0];
-    const mainTable = document.querySelectorAll("table.min-w-full")[0];
-    const mainTableContent = document.querySelectorAll("table.min-w-full td")[0];
+    const mainEl = document.getElementsByTagName("main")?.[0];
+    const mainTable = document.querySelectorAll("table.min-w-full")?.[0];
+    const mainTableContent = document.querySelectorAll("table.min-w-full td")?.[0];
     const portfolioChart = document.querySelector('[data-highcharts-chart], .border-graph-axislines');
 
     if (mainEl) {
       await getTokenAndAccount(); // this is to cache the token and account
     }
-    if (portfolioChart && mainTableContent && !symphonyPerformanceSyncActive) {
+    if (mainTable && portfolioChart && mainTableContent && !symphonyPerformanceSyncActive) {
       symphonyPerformanceSyncActive = true;
       startSymphonyPerformanceSync(mainTable);
     }
