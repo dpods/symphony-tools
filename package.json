@@ -5,9 +5,9 @@
   "scripts": {
     "download-resources": "node bin/resource-downloader.js",
     "setup": "npm run download-resources",
-    "build:major": "node bin/build.js major",
-    "build:minor": "node bin/build.js minor",
-    "build:patch": "node bin/build.js patch"
+    "build:major": "npm run setup && node bin/build.js major",
+    "build:minor": "npm run setup && node bin/build.js minor",
+    "build:patch": "npm run setup && node bin/build.js patch"
   },
   "devDependencies": {
     "adm-zip": "^0.5.12",
