@@ -11,9 +11,11 @@ We generate Tearsheets in browser and build a blob url. These links are held in 
   - Inline tooltips for describing tickers
 
 Ticker Tooltip
+
 ![Composer Quant Tools - Ticker Tooltip](docs/images/ticker-tooltip.png)
 
 Portfolio Quant Stats
+
 ![Composer Quant Tools - Portfolio headers](docs/images/selectable-headers.png)
 ![Composer Quant Tools - Portfolio List](docs/images/portfolio-quantstats.png)
 
@@ -21,11 +23,26 @@ Quant Stats Tearsheets
 ![Composer Quant Tools - Portfolio List](docs/images/inline-tearsheet-building.png)
 ![Composer Quant Tools - Portfolio List](docs/images/inline-tearsheet-blob-link.png)
 
-### Installation Requirements
 
-1. npm (this must be installed)
 
 ### Installation
+
+#### Chrome Web Store Installation
+
+Open this link and add it to your browser: [Composer Quant Tools](https://chromewebstore.google.com/detail/composer-quant-tools/hdpfpdpjpjfjjcnoggkjcklbagffblha)
+
+#### Install from release
+
+There are a couple options here.
+Download the latest release from the [releases page](https://github.com/jhicken/composer-quant-tools/releases)
+
+There is the direct .crx file. If you download this you might be able to just install it by double clicking it? I haven't tried this.
+
+There is also a.zip file. This is the same as the.crx file but you can extract it then follow the manual installation instructions starting at step 4.
+
+#### Manual Installation Requirements
+
+1. npm (this must be installed)
 
 #### Manual Installation
 1. clone the project
