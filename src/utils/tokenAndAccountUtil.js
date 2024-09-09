@@ -27,54 +27,70 @@ async function pollForToken() {
   });
 }
 
-async function getAccount(token) {
-  try {
-    const resp = await fetch(
-      "https://stagehand-api.composer.trade/api/v1/accounts/list",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    const data = await resp.json();
-    let account = data.accounts.find(
-      (account) =>
-        account.account_uuid === localStorage.getItem("selectedAccount"),
-    );
+let accountPromise;
 
-    if (account) {
-      return account;
-    }
+// getAccount will poll for selectedAccount every 200ms until it is found (So it could run indefinitely if the account is never found)
+function getAccount(token) {
+  if (!accountPromise) {
+    accountPromise = new Promise(async (resolve) => {
+      try {
+        const resp = await fetch(
+          "https://stagehand-api.composer.trade/api/v1/accounts/list",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        const data = await resp.json();
 
-    const isStocks = getElementsByText("Stocks", "button").length > 0;
-    const isRoth = getElementsByText("Roth", "button").length > 0;
-    const isTraditional = getElementsByText("Traditional", "button").length > 0;
+        let account;
 
-    if (isStocks) {
-      account = data.accounts.filter((acct) =>
-        acct.account_type.toLowerCase().includes("individual"),
-      )[0];
-    } else if (isRoth) {
-      account = data.accounts.filter((acct) =>
-        acct.account_type.toLowerCase().includes("roth"),
-      )[0];
-    } else if (isTraditional) {
-      account = data.accounts.filter((acct) =>
-        acct.account_type.toLowerCase().includes("traditional"),
-      )[0];
-    } else {
-      throw new Error(
-        "[composer-quant-tools]: Unable to detect account type",
-      );
-    }
-    return account;
-  } catch (error) {
-    console.error(
-      "[composer-quant-tools]: Unable to detect account type with:",
-      data
-    );
+        while (!account) {
+          account = data.accounts.find(
+            (account) =>
+              account.account_uuid === localStorage.getItem("selectedAccount"),
+          );
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+
+        if (account) {
+          resolve(account);
+        } else {
+          // Fallback to detecting account type we should remove this at somepoint
+          // there is always a chance the localStorage variable will not be used
+          const isStocks = getElementsByText("Stocks", "button").length > 0;
+          const isRoth = getElementsByText("Roth", "button").length > 0;
+          const isTraditional = getElementsByText("Traditional", "button").length > 0;
+
+          if (isStocks) {
+            account = data.accounts.filter((acct) =>
+              acct.account_type.toLowerCase().includes("individual"),
+            )[0];
+          } else if (isRoth) {
+            account = data.accounts.filter((acct) =>
+              acct.account_type.toLowerCase().includes("roth"),
+            )[0];
+          } else if (isTraditional) {
+            account = data.accounts.filter((acct) =>
+              acct.account_type.toLowerCase().includes("traditional"),
+            )[0];
+          } else {
+            throw new Error(
+              "[composer-quant-tools]: Unable to detect account type",
+            );
+          }
+          resolve(account);
+        }
+      } catch (error) {
+        console.error(
+          "[composer-quant-tools]: Unable to detect account type with:",
+          data
+        );
+      }
+    });
   }
+  return accountPromise;
 }
 
 function getTokenAndAccountUtil() {
