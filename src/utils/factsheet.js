@@ -227,7 +227,7 @@ async function getSymphonyBacktest(symphonyId) {
         backtest_version: "v2",
         slippage_percent: 0,
         spread_markup: 0,
-        start_date: "2000-07-12",
+        start_date: "1969-12-31",
         end_date: new Date().toISOString().split("T")[0],
         benchmark_symphonies: [],
         // "benchmark_tickers": [
