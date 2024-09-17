@@ -226,6 +226,78 @@ async function getQuantStats(symphony, series_data) {
   }
 }
 
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("QuantStatsCache", 1);
+    request.onerror = reject;
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      db.createObjectStore("cache", { keyPath: "id" });
+    };
+  });
+}
+
+function setCache(key, value, expiry) {
+  return new Promise((resolve, reject) => {
+    openDB().then(db => {
+      const transaction = db.transaction(["cache"], "readwrite");
+      const store = transaction.objectStore("cache");
+      const request = store.put({ id: key, value, expiry });
+      request.onerror = reject;
+      request.onsuccess = () => resolve();
+    }).catch(reject);
+  });
+}
+
+function getCache(key) {
+  return new Promise((resolve, reject) => {
+    openDB().then(db => {
+      const transaction = db.transaction(["cache"], "readonly");
+      const store = transaction.objectStore("cache");
+      const request = store.get(key);
+      request.onerror = reject;
+      request.onsuccess = () => resolve(request.result);
+    }).catch(reject);
+  });
+}
+
+async function clearOldCache() {
+  const db = await openDB();
+  const transaction = db.transaction(["cache"], "readwrite");
+  const store = transaction.objectStore("cache");
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000; // One week ago
+
+  return new Promise((resolve, reject) => {
+    const request = store.openCursor();
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        if (cursor.value.expiry < oneWeekAgo) {
+          cursor.delete();
+        }
+        cursor.continue();
+      } else {
+        resolve();
+      }
+    };
+    request.onerror = reject;
+  });
+}
+
+// Use alarms API for periodic cache cleanup
+chrome.alarms.create('clearOldCache', { periodInMinutes: 1440 }); // Run once a day
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'clearOldCache') {
+    clearOldCache().then(() => {
+      console.log('Old cache items cleared');
+    }).catch((error) => {
+      console.error('Error clearing old cache items:', error);
+    });
+  }
+});
+
 chrome.runtime.onMessageExternal.addListener(
   (request, sender, sendResponse) => {
     if (request.action === "onToken") {
@@ -246,21 +318,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("sym", symphony);
     console.log("dc", symphony?.dailyChanges);
 
-    // cache the result in chrome.storage.local for 3 hours. check if the cache is still valid
     const cacheKey = `quantstats_${symphony.id}`;
     const cacheExpiry = Date.now() + 3 * 60 * 60 * 1000;
-    chrome.storage.local.get(cacheKey, (cache) => {
-      if (cache[cacheKey] && cache[cacheKey].expiry > Date.now()) {
+
+    getCache(cacheKey).then(cachedItem => {
+      if (cachedItem && cachedItem.expiry > Date.now()) {
         console.log("Returning cached result");
-        sendResponse(cache[cacheKey].value);
+        sendResponse(cachedItem.value);
       } else {
-        getQuantStats(symphony, symphony?.dailyChanges).then((quantStats) => {
-          chrome.storage.local.set({
-            [cacheKey]: { value: quantStats, expiry: cacheExpiry },
+        getQuantStats(symphony, symphony?.dailyChanges).then(quantStats => {
+          setCache(cacheKey, quantStats, cacheExpiry).then(() => {
+            sendResponse(quantStats);
+          }).catch(error => {
+            console.error("Error setting cache:", error);
+            sendResponse(quantStats); // Still send the response even if caching fails
           });
-          sendResponse(quantStats);
+        }).catch(error => {
+          console.error("Error getting QuantStats:", error);
+          sendResponse({ error: "An error occurred while processing the request" });
         });
       }
+    }).catch(error => {
+      console.error("Error getting cache:", error);
+      // If there's an error getting the cache, proceed with getting fresh data
+      getQuantStats(symphony, symphony?.dailyChanges).then(quantStats => {
+        sendResponse(quantStats);
+      }).catch(error => {
+        console.error("Error getting QuantStats:", error);
+        sendResponse({ error: "An error occurred while processing the request" });
+      });
     });
 
     return true; // Indicates we will send a response asynchronously
@@ -287,6 +373,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       backtestData,
     ).then((TearsheetHtml) => {
       sendResponse(TearsheetHtml);
+    }).catch((error)=>{
+      sendResponse({error});
     });
 
     return true; // Indicates we will send a response asynchronously

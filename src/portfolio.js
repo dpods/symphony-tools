@@ -188,7 +188,7 @@ export async function getSymphonyPerformanceInfo(options = {}) {
   performanceData.accountDeploys = accountDeploys;
   performanceData.symphonyStats = symphonyStats;
 
-  for (const symphony of symphonyStats.symphonies) {
+  await Promise.all(symphonyStats.symphonies.map(async (symphony) => {
     try {
       symphony.dailyChanges = await getSymphonyDailyChange(
         symphony.id,
@@ -197,7 +197,7 @@ export async function getSymphonyPerformanceInfo(options = {}) {
       );
       addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys);
       await addQuantstatsToSymphony(symphony, accountDeploys);
-      onSymphonyCallback && onSymphonyCallback(symphony);
+      onSymphonyCallback?.(symphony);
     } catch (error) {
       log(
         "Error adding stats to symphony",
@@ -206,7 +206,7 @@ export async function getSymphonyPerformanceInfo(options = {}) {
         error,
       );
     }
-  }
+  }));
 
   return performanceData;
 }
