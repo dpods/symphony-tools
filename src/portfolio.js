@@ -39,6 +39,7 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
     const mainTable = document.querySelectorAll("table.min-w-full")[0];
     updateColumns(mainTable, extraColumns);
     updateTableRows();
+    Sortable.initTable(mainTable);
   }
 });
 
@@ -100,7 +101,7 @@ const startSymphonyPerformanceSync = async (mainTable) => {
     mutations,
     mutationInstance,
   ) {
-    // run extendSymphonyStatsRow for each symphony but only at a max of once per second using a timeout to make sure it runs at least once per second
+    // run extendSymphonyStatsRow for each symphony but only at a max of once per second using a timeout to make sure it runs at least once per 200ms
     clearTimeout(rowObserverTimeout);
     rowObserverTimeout = setTimeout(updateTableRows, 200);
     log("rowObserver triggered");
@@ -109,9 +110,19 @@ const startSymphonyPerformanceSync = async (mainTable) => {
 };
 
 function updateTableRows() {
+  const mainTableBody = document.querySelectorAll("table.min-w-full tbody")[0];
+  const rows = mainTableBody.querySelectorAll("tr");
+
   performanceData?.symphonyStats?.symphonies?.forEach?.((symphony) => {
     if (symphony.addedStats) {
-      extendSymphonyStatsRow(symphony);
+      for (let row of rows) {
+        const nameTd = row.querySelector("td:first-child");
+        const nameText = nameTd?.textContent?.trim?.();
+        if (nameText == symphony.name) {
+          updateRowStats(row, symphony.addedStats);
+          break;
+        }
+      }
     }
   });
 }
@@ -123,51 +134,60 @@ function extendSymphonyStatsRow(symphony) {
   for (let row of rows) {
     const nameTd = row.querySelector("td:first-child");
     const nameText = nameTd?.textContent?.trim?.();
-    if (
-      nameText == symphony.name &&
-      row.children.length < 10 && // make sure we only add the extra columns once
-      symphony.addedStats
-    ) {
-      row.lastChild.remove();
-      extraColumns.forEach((key) => {
-        let value = symphony.addedStats[key];
-        const newTd = document.createElement("td");
-        newTd.className =
-          "text-sm text-dark whitespace-nowrap py-4 px-6 truncate flex items-center extra-column";
-        newTd.style = "min-width: 10rem; max-width: 10rem;";
-        newTd.textContent = value;
-        row.appendChild(newTd);
-      });
-      const newTd = document.createElement("td");
-      newTd.className = "w-full";
-      row.appendChild(newTd);
+    if (nameText == symphony.name && symphony.addedStats) {
+      updateRowStats(row, symphony.addedStats);
       break;
     }
   }
 }
 
-function updateColumns(mainTable, extraColumns) {
-  removeExtraColumns(mainTable);
-  addExtraColumns(mainTable, extraColumns);
-}
+function updateRowStats(row, addedStats) {
+  extraColumns.forEach((key, index) => {
+    let value = addedStats[key];
+    let cell = row.querySelector(`.extra-column[data-key="${key}"]`);
+    
+    if (!cell) {
+      cell = document.createElement("td");
+      cell.className = "text-sm text-dark whitespace-nowrap py-4 px-6 truncate flex items-center extra-column";
+      cell.style = "min-width: 10rem; max-width: 10rem;";
+      cell.dataset.key = key;
+      row.insertBefore(cell, row.lastElementChild);
+    }
+    
+    cell.textContent = value;
+  });
 
-function removeExtraColumns(mainTable) {
-  mainTable.querySelectorAll(".extra-column").forEach((node) => node.remove());
-}
-
-function addExtraColumns(mainTable, extraColumns) {
-  for (let i = 0; i < extraColumns.length; i++) {
-    // Add the new headers
-    const thead = mainTable.querySelector("thead tr");
-    const newTh = document.createElement("th");
-    newTh.scope = "col";
-    newTh.className =
-      "text-xs px-6 py-2 text-dark-soft text-left font-normal whitespace-nowrap align-bottom extra-column";
-    newTh.style = "min-width: 10rem; max-width: 10rem;";
-    newTh.setAttribute("data-sortable-type", "numeric");
-    newTh.textContent = extraColumns[i];
-    thead.appendChild(newTh);
+  // Ensure the last column is the empty one
+  let lastCell = row.lastElementChild;
+  if (!lastCell.classList.contains('w-full')) {
+    lastCell = document.createElement("td");
+    lastCell.className = "w-full";
+    row.appendChild(lastCell);
   }
+}
+
+function updateColumns(mainTable, extraColumns) {
+  const thead = mainTable.querySelector("thead tr");
+  
+  // Remove extra columns that are no longer needed
+  mainTable.querySelectorAll('.extra-column').forEach(element => {
+    element.remove();
+  });
+
+  // Add or update columns
+  extraColumns.forEach((columnName, index) => {
+    let th = thead.querySelector(`.extra-column[data-key="${columnName}"]`);
+    if (!th) {
+      th = document.createElement("th");
+      th.scope = "col";
+      th.className = "text-xs px-6 py-2 text-dark-soft text-left font-normal whitespace-nowrap align-bottom extra-column";
+      th.style = "min-width: 10rem; max-width: 10rem;";
+      th.setAttribute("data-sortable-type", "numeric");
+      th.dataset.key = columnName;
+      thead.appendChild(th);
+    }
+    th.textContent = columnName;
+  });
 }
 
 const TwoHours = 2 * 60 * 60 * 1000; // this should only update once per day ish base on a normal user's usage. It could happen multiple times if multiple windows are open. or if the user is refreshing every 12 hours.
@@ -197,6 +217,11 @@ export async function getSymphonyPerformanceInfo(options = {}) {
       );
       addGeneratedSymphonyStatsToSymphony(symphony, accountDeploys);
       await addQuantstatsToSymphony(symphony, accountDeploys);
+      // find the symphony in the array and update it by id
+      const symphonyIndex = performanceData.symphonyStats.symphonies.findIndex(s => s.id === symphony.id);
+      if (symphonyIndex !== -1) {
+        performanceData.symphonyStats.symphonies[symphonyIndex] = symphony;
+      }
       onSymphonyCallback?.(symphony);
     } catch (error) {
       log(

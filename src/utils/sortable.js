@@ -48,6 +48,7 @@ export function addSortableJs() {
         return _results;
       },
       initTable: function (table) {
+        this.destroyTable(table);
         var i, th, ths, _i, _len, _ref;
         if (((_ref = table.tHead) != null ? _ref.rows.length : void 0) !== 1) {
           return;
@@ -174,6 +175,7 @@ export function addSortableJs() {
               : void 0;
           }
         };
+        th.sortableOnClick = onClick;  // Store the onClick function for later removal
         _results = [];
         for (_i = 0, _len = clickEvents.length; _i < _len; _i++) {
           eventName = clickEvents[_i];
@@ -229,6 +231,41 @@ export function addSortableJs() {
         }
         return _results;
       },
+      destroy: function (options) {
+        if (options == null) {
+          options = {};
+        }
+        if (options.selector == null) {
+          options.selector = SELECTOR;
+        }
+        var tables = document.querySelectorAll(options.selector);
+        tables.forEach(function(table) {
+          sortable.destroyTable(table);
+        });
+      },
+      destroyTable: function (table) {
+        if (table.getAttribute("data-sortable-initialized") !== "true") {
+          return;
+        }
+        table.removeAttribute("data-sortable-initialized");
+        var ths = table.querySelectorAll("th");
+        ths.forEach(function(th, i) {
+          if (th.getAttribute("data-sortable") !== "false") {
+            sortable.removeClickableTH(table, th, i);
+          }
+          th.removeAttribute("data-sorted");
+          th.removeAttribute("data-sorted-direction");
+        });
+      },
+      removeClickableTH: function (table, th, i) {
+        var onClick = th.sortableOnClick;
+        if (onClick) {
+          clickEvents.forEach(function(eventName) {
+            th.removeEventListener(eventName, onClick);
+          });
+          delete th.sortableOnClick;
+        }
+      },
     };
 
     sortable.setupTypes([
@@ -277,4 +314,11 @@ export function addSortableJs() {
       window.Sortable = sortable;
     }
   }).call(this);
+}
+
+// Add this export for the destroy function
+export function removeSortableJs() {
+  if (window.Sortable && typeof window.Sortable.destroy === 'function') {
+    window.Sortable.destroy();
+  }
 }
