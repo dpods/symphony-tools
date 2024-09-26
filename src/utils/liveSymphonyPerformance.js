@@ -154,7 +154,7 @@ export async function addQuantstatsToSymphony(symphony, accountDeploys) {
           log(response?.error);
           reject(response.error);
         } else {
-          symphony.quantstats = JSON.parse(response);
+          symphony.quantstats = JSON.parse(response || "{}");
           symphony.addedStats = {
             ...symphony.addedStats,
             ...symphony.quantstats.quantstats_metrics,

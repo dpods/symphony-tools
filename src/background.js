@@ -1,4 +1,20 @@
 let pyodideReadyPromise;
+let queue = [];
+let isProcessing = false;
+
+function processQueue() {
+  if (isProcessing || queue.length === 0) return;
+  isProcessing = true;
+  const task = queue.shift();
+  task().then(() => {
+    isProcessing = false;
+    processQueue();
+  }).catch(error => {
+    console.error("Error processing task:", error);
+    isProcessing = false;
+    processQueue();
+  });
+}
 
 async function loadPyodideAndPackages() {
   importScripts(chrome.runtime.getURL("/lib/pyodide/pyodide.js"));
@@ -172,7 +188,7 @@ async function getQuantStats(symphony, series_data) {
   //   "series":[198.9],
   //   "deposit_adjusted_series":[200]
   // }
-  if (symphony.dailyChanges.epoch_ms.length <= 1) {
+  if (series_data.epoch_ms.length <= 1) {
     return {
       error: `Symphony_name:${symphony.name} Symphony_id:${symphony.id} Not enough data to calculate QuantStats`,
     };
@@ -226,6 +242,78 @@ async function getQuantStats(symphony, series_data) {
   }
 }
 
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("QuantStatsCache", 1);
+    request.onerror = reject;
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      db.createObjectStore("cache", { keyPath: "id" });
+    };
+  });
+}
+
+function setCache(key, value, expiry) {
+  return new Promise((resolve, reject) => {
+    openDB().then(db => {
+      const transaction = db.transaction(["cache"], "readwrite");
+      const store = transaction.objectStore("cache");
+      const request = store.put({ id: key, value, expiry });
+      request.onerror = reject;
+      request.onsuccess = () => resolve();
+    }).catch(reject);
+  });
+}
+
+function getCache(key) {
+  return new Promise((resolve, reject) => {
+    openDB().then(db => {
+      const transaction = db.transaction(["cache"], "readonly");
+      const store = transaction.objectStore("cache");
+      const request = store.get(key);
+      request.onerror = reject;
+      request.onsuccess = () => resolve(request.result);
+    }).catch(reject);
+  });
+}
+
+async function clearOldCache() {
+  const db = await openDB();
+  const transaction = db.transaction(["cache"], "readwrite");
+  const store = transaction.objectStore("cache");
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000; // One week ago
+
+  return new Promise((resolve, reject) => {
+    const request = store.openCursor();
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        if (cursor.value.expiry < oneWeekAgo) {
+          cursor.delete();
+        }
+        cursor.continue();
+      } else {
+        resolve();
+      }
+    };
+    request.onerror = reject;
+  });
+}
+
+// Use alarms API for periodic cache cleanup
+chrome.alarms.create('clearOldCache', { periodInMinutes: 1440 }); // Run once a day
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'clearOldCache') {
+    clearOldCache().then(() => {
+      console.log('Old cache items cleared');
+    }).catch((error) => {
+      console.error('Error clearing old cache items:', error);
+    });
+  }
+});
+
 chrome.runtime.onMessageExternal.addListener(
   (request, sender, sendResponse) => {
     if (request.action === "onToken") {
@@ -239,56 +327,66 @@ chrome.runtime.onMessageExternal.addListener(
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("Received message", request);
 
-  if (request.action === "getQuantStats") {
-    const symphony = request?.symphony;
+  const task = () => new Promise((resolve) => {
+    if (request.action === "getQuantStats") {
+      const symphony = request?.symphony;
+      console.log("Getting QuantStats");
+      console.log("sym", symphony);
+      console.log("dc", symphony?.dailyChanges);
 
-    console.log("Getting QuantStats");
-    console.log("sym", symphony);
-    console.log("dc", symphony?.dailyChanges);
+      const cacheKey = `quantstats_${symphony.id}`;
+      const cacheExpiry = Date.now() + 3 * 60 * 60 * 1000;
 
-    // cache the result in chrome.storage.local for 3 hours. check if the cache is still valid
-    const cacheKey = `quantstats_${symphony.id}`;
-    const cacheExpiry = Date.now() + 3 * 60 * 60 * 1000;
-    chrome.storage.local.get(cacheKey, (cache) => {
-      if (cache[cacheKey] && cache[cacheKey].expiry > Date.now()) {
-        console.log("Returning cached result");
-        sendResponse(cache[cacheKey].value);
-      } else {
-        getQuantStats(symphony, symphony?.dailyChanges).then((quantStats) => {
-          chrome.storage.local.set({
-            [cacheKey]: { value: quantStats, expiry: cacheExpiry },
+      getCache(cacheKey).then(cachedItem => {
+        if (cachedItem && cachedItem.expiry > Date.now()) {
+          console.log("Returning cached result");
+          sendResponse(cachedItem.value);
+        } else {
+          getQuantStats(symphony, symphony?.dailyChanges).then(quantStats => {
+            setCache(cacheKey, quantStats, cacheExpiry).catch(error => {
+              console.error("Error setting cache:", error);
+            });
+            sendResponse(quantStats);
+          }).catch(error => {
+            console.error("Error getting QuantStats:", error);
+            sendResponse({ error: "An error occurred while processing the request" });
           });
+        }
+      }).catch(error => {
+        console.error("Error getting cache:", error);
+        getQuantStats(symphony, symphony?.dailyChanges).then(quantStats => {
           sendResponse(quantStats);
+        }).catch(error => {
+          console.error("Error getting QuantStats:", error);
+          sendResponse({ error: "An error occurred while processing the request" });
         });
-      }
-    });
+      }).finally(resolve);
+    } else if (request.action === "getTearsheet") {
+      const symphony = request?.symphony;
+      const backtestData = request?.backtestData;
 
-    return true; // Indicates we will send a response asynchronously
-  }
+      console.log("Getting TearsheetBlobUrl");
+      console.log("sym", symphony);
+      console.log("dc", symphony?.dailyChanges);
 
-  const types = ["live", "backtest", "oos"];
-
-  if (request.action === "getTearsheet") {
-    if (!types.includes(request?.type)) {
-      return true;
+      getTearsheetHtml(
+        symphony,
+        symphony?.dailyChanges,
+        request?.type,
+        backtestData,
+      ).then((TearsheetHtml) => {
+        sendResponse(TearsheetHtml);
+      }).catch((error) => {
+        sendResponse({error});
+      }).finally(resolve);
+    } else {
+      sendResponse({ error: "Unknown action" });
+      resolve();
     }
+  });
 
-    const symphony = request?.symphony;
-    const backtestData = request?.backtestData;
+  queue.push(task);
+  processQueue();
 
-    console.log("Getting TearsheetBlobUrl");
-    console.log("sym", symphony);
-    console.log("dc", symphony?.dailyChanges);
-
-    getTearsheetHtml(
-      symphony,
-      symphony?.dailyChanges,
-      request?.type,
-      backtestData,
-    ).then((TearsheetHtml) => {
-      sendResponse(TearsheetHtml);
-    });
-
-    return true; // Indicates we will send a response asynchronously
-  }
+  return true; // Indicates we will send a response asynchronously
 });

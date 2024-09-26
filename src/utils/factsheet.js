@@ -80,16 +80,16 @@ function renderTearsheetButton(factsheet) {
             const blob = new Blob([response], { type: "text/html" });
             const url = URL.createObjectURL(blob);
 
-            const downloadLink = document.createElement("a");
-            downloadLink.classList.add(`tearsheet-${testType}-link`);
-            downloadLink.href = url;
-            downloadLink.target = "_blank";
-            downloadLink.textContent = `Open QuantStats ${testType} Tearsheet Report`;
-            downloadLink.style.display = "block";
-            downloadLink.style.marginTop = "20px";
-            downloadLink.style.color = "#007bff"; // blue
+            const downloadLinkHTML = `
+              <a 
+                 href="${url}" 
+                 target="_blank" 
+                 style="display: block; margin-left: 20px; margin-top: 6px; color: #007bff;">
+                Open QuantStats ${testType} Tearsheet Report
+              </a>
+            `;
 
-            resolve(downloadLink);
+            resolve(downloadLinkHTML);
           }
         }
       );
@@ -99,7 +99,7 @@ function renderTearsheetButton(factsheet) {
   async function buildTearsheetButtonClickHandler(testType) {
     // disable buttons while toggling
     const buildTearsheetButton = factsheet?.querySelector?.(
-      `#tearsheat-widget #build-${testType}-tearsheet`
+      `#tearsheat-widget #build-${testType}-tearsheet-button`
     );
 
     setButtonEnabled(buildTearsheetButton, false);
@@ -145,14 +145,22 @@ function renderTearsheetButton(factsheet) {
       };
     }
 
-    const downloadLink = await getTearsheet(symphony, backtestData, testType);
+    let downloadLink;
+    try {
+      downloadLink = await getTearsheet(symphony, backtestData, testType);
+    } catch {
+      downloadLink = `<span style="display: block; margin-left: 20px; margin-top: 6px;">(error generating ${testType} tearsheet)</span>`;
+      // we already logged it
+    }
+
+    const linkContainer = document.createElement('div');
+    linkContainer.classList.add(`tearsheet-${testType}-link`)
+    linkContainer.innerHTML = downloadLink;
+    
 
     buildTearsheetButton.innerHTML = `<span class="flex items-center space-x-2">${originalText}</span>`; // Clear any previous link
-    buildTearsheetButton.after(downloadLink);
+    buildTearsheetButton.insertAdjacentElement('afterend', linkContainer);
     setButtonEnabled(buildTearsheetButton, true);
-    factsheet
-      ?.querySelector?.("#tearsheat-widget")
-      ?.appendChild?.(downloadLink);
   }
 
   const hasLiveData = (
@@ -174,28 +182,39 @@ function renderTearsheetButton(factsheet) {
   );
 
   const buildBackTestTearsheetButton = button(
-    "build-backtest-tearsheet",
+    "build-backtest-tearsheet-button",
     "Build Backtest Tearsheet",
     () => buildTearsheetButtonClickHandler("backtest"),
     "rounded-tl rounded-bl"
   ); // this is the button that will build the backtest tearsheet
-  tearsheetContainer.appendChild(buildBackTestTearsheetButton);
+  const backtestTearsheetArea = document.createElement('div')
+  backtestTearsheetArea.style.display = 'flex';
+  backtestTearsheetArea.appendChild(buildBackTestTearsheetButton);
+  tearsheetContainer.appendChild(backtestTearsheetArea);
+
   if (hasLiveData) {
     const buildLiveTearsheetButton = button(
-      "build-live-tearsheet",
+      "build-live-tearsheet-button",
       "Build Live Tearsheet",
       () => buildTearsheetButtonClickHandler("live"),
       "rounded-tl rounded-bl"
     ); // this is the button that will build the live tearsheet
-    tearsheetContainer.appendChild(buildLiveTearsheetButton);
+    const liveTearsheetArea = document.createElement('div')
+    liveTearsheetArea.style.display = 'flex';
+    liveTearsheetArea.appendChild(buildLiveTearsheetButton);
+    tearsheetContainer.appendChild(liveTearsheetArea);
   }
+
   const buildOOSTearsheetButton = button(
-    "build-oos-tearsheet",
+    "build-oos-tearsheet-button",
     "Build OOS Tearsheet",
     () => buildTearsheetButtonClickHandler("oos"),
     "rounded-tl rounded-bl"
   ); // this is the button that will build the live tearsheet
-  tearsheetContainer.appendChild(buildOOSTearsheetButton);
+  const oosTearsheetArea = document.createElement('div')
+  oosTearsheetArea.style.display = 'flex';
+  oosTearsheetArea.appendChild(buildOOSTearsheetButton);
+  tearsheetContainer.appendChild(oosTearsheetArea);
 
   graphNode.appendChild(tearsheetContainer);
 }
@@ -227,7 +246,7 @@ async function getSymphonyBacktest(symphonyId) {
         backtest_version: "v2",
         slippage_percent: 0,
         spread_markup: 0,
-        start_date: "2000-07-12",
+        start_date: "1969-12-31",
         end_date: new Date().toISOString().split("T")[0],
         benchmark_symphonies: [],
         // "benchmark_tickers": [
