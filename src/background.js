@@ -141,6 +141,10 @@ async function getTearsheetHtml(symphony, series_data, type, backtestData) {
         import matplotlib
         import tempfile
         import os
+        import warnings
+
+        # suppress warnings because they are very noisy
+        warnings.filterwarnings("ignore")
 
         # Set matplotlib to use the Agg backend to avoid displaying plots this is necessary for running in a headless environment
         matplotlib.use('Agg')
@@ -208,6 +212,10 @@ async function getQuantStats(symphony, series_data) {
         import quantstats as qs
         import pandas as pd
         import json
+        import warnings
+
+        # suppress warnings because they are very noisy
+        warnings.filterwarnings("ignore")
 
         symphony_id = '${symphony.id.replace(/'/g, "\\'")}'
         symphony_name = '${symphony.name.replace(/'/g, "\\'")}'
