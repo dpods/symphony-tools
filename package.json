@@ -1,6 +1,6 @@
 {
   "name": "composer-quant-tools",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "download-resources": "node bin/resource-downloader.js",
