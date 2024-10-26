@@ -25,12 +25,12 @@ async function loadPyodideAndPackages() {
   await pyodide.loadPackage("micropip");
   await pyodide.loadPackage("ipython");
   await pyodide.loadPackage("openblas");
-  await pyodide.loadPackage("/lib/pyodide/QuantStats-0.0.62-py2.py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/quantstats_lumi-0.3.3-py2.py3-none-any.whl");
   await pyodide.loadPackage("/lib/pyodide/tabulate-0.9.0-py3-none-any.whl");
-  await pyodide.loadPackage("/lib/pyodide/yfinance-0.2.40-py2.py3-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/yfinance-0.2.48-py2.py3-none-any.whl");
   await pyodide.loadPackage("/lib/pyodide/seaborn-0.13.2-py3-none-any.whl");
   await pyodide.loadPackage("/lib/pyodide/platformdirs-4.2.2-py3-none-any.whl");
-  await pyodide.loadPackage("/lib/pyodide/frozendict-2.4.4-py312-none-any.whl");
+  await pyodide.loadPackage("/lib/pyodide/frozendict-2.4.6-py312-none-any.whl");
   await pyodide.loadPackage("/lib/pyodide/multitasking-0.0.11-py3-none-any.whl");
   await pyodide.loadPackage("/lib/pyodide/matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl");
   await pyodide.loadPackage("/lib/pyodide/cycler-0.12.1-py3-none-any.whl");
@@ -108,7 +108,7 @@ async function getTearsheetHtml(symphony, series_data, type, backtestData) {
   try {
     let tearsheetHtml = await pyodide.runPythonAsync(`
 
-        import quantstats as qs
+        import quantstats_lumi as qs
         import pandas as pd
         import json
         import sys
@@ -183,7 +183,7 @@ async function getQuantStats(symphony, series_data) {
   try {
     let output = await pyodide.runPythonAsync(`
 
-        import quantstats as qs
+        import quantstats_lumi as qs
         import pandas as pd
         import json
         import warnings
