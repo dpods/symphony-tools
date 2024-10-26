@@ -32,11 +32,13 @@
       "js": [
         "fetchAuth.js",
         "lib/jslib/lodash.min.js",
-        "utils/liveTickerTooltip.js"
+        "utils/liveTickerTooltip.js",
+        "utils/logarithmicCharts.js"
       ],
       "world": "MAIN",
       "css": [
         "utils/liveTickerTooltip.css",
+        "utils/logarithmicCharts.css",
         "utils/additional.css"
       ]
     },
