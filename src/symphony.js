@@ -7,7 +7,7 @@
                 mutationInstance.disconnect();
             }
         });
-        observer.observe(document, { childList: true, subtree: true});
+        observer.observe(document, { childList: true, subtree: true });
     }
 
     function renderSymphonyWidget(sidebarEl) {
@@ -18,12 +18,13 @@
 
         const div = document.createElement("div");
         div.id = 'ste-widget'
-        div.classList.add('border','border-panel-border','rounded-md','shadow-sm','bg-panel-bg','pt-4','pb-5','px-4','space-y-3')
+        div.classList.add('border', 'border-panel-border', 'rounded-md', 'shadow-sm', 'bg-panel-bg', 'pt-4', 'pb-5', 'px-4', 'space-y-3')
         sidebarEl.appendChild(div)
 
         div.appendChild(logo())
         div.appendChild(stripMetadataButton())
         div.appendChild(clickToCopy())
+        div.appendChild(downloadJsonButton())
         div.appendChild(findAndReplaceForm())
         div.appendChild(donate())
 
@@ -96,13 +97,13 @@
 
     const stripMetadataButton = () => {
         let wrapper = document.createElement('div')
-        wrapper.classList.add('rounded','flex','border','border-asset-border','shadow-sm','bg-panel-bg','divide-x','divide-solid','divide-asset-border')
+        wrapper.classList.add('rounded', 'flex', 'border', 'border-asset-border', 'shadow-sm', 'bg-panel-bg', 'divide-x', 'divide-solid', 'divide-asset-border')
 
         let button = document.createElement('button')
-        button.classList.add('w-full','text-sm','font-light','flex','items-center','justify-center','py-2','shadow-inner','transition','focus:outline-none','leading-none','select-none','rounded','text-dark-soft','bg-background')
+        button.classList.add('w-full', 'text-sm', 'font-light', 'flex', 'items-center', 'justify-center', 'py-2', 'shadow-inner', 'transition', 'focus:outline-none', 'leading-none', 'select-none', 'rounded', 'text-dark-soft', 'bg-background')
 
         let span = document.createElement('span')
-        span.classList.add('flex','items-cente','space-x-2')
+        span.classList.add('flex', 'items-cente', 'space-x-2')
         span.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" height="16" width="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" /></svg>'
 
         let text = document.createElement('span')
@@ -219,14 +220,14 @@
 
         const replaceButton = () => {
             let wrapper = document.createElement('div')
-            wrapper.classList.add('w-1/2', 'rounded','flex','border','border-asset-border','shadow-sm','bg-panel-bg','divide-x','divide-solid','divide-asset-border')
+            wrapper.classList.add('w-1/2', 'rounded', 'flex', 'border', 'border-asset-border', 'shadow-sm', 'bg-panel-bg', 'divide-x', 'divide-solid', 'divide-asset-border')
 
             let button = document.createElement('button')
             button.id = 'findAndReplaceBtn'
-            button.classList.add('w-full','text-sm','font-light','flex','items-center','justify-center','py-2','shadow-inner','transition','focus:outline-none','leading-none','select-none','rounded','text-dark-soft','bg-background')
+            button.classList.add('w-full', 'text-sm', 'font-light', 'flex', 'items-center', 'justify-center', 'py-2', 'shadow-inner', 'transition', 'focus:outline-none', 'leading-none', 'select-none', 'rounded', 'text-dark-soft', 'bg-background')
 
             let span = document.createElement('span')
-            span.classList.add('flex','items-center','space-x-2')
+            span.classList.add('flex', 'items-center', 'space-x-2')
 
             let text = document.createElement('span')
             text.innerText = 'Replace All'
@@ -292,6 +293,53 @@
 
         wrapper.appendChild(button('Copy JSON', copyJson, 'rounded-tl rounded-bl'))
         wrapper.appendChild(button('Copy EDN', copyEdn, 'rounded-tr rounded-br'))
+        return wrapper
+    }
+
+    const downloadJsonButton = () => {
+        const downloadJson = () => {
+            const symphonyJson = getSymphonyJson()
+            const jsonString = JSON.stringify(symphonyJson, null, 2)
+
+            // Extract symphony ID from URL (e.g., /symphony/abc123 -> abc123)
+            const pathParts = window.location.pathname.split('/')
+            const symphonyId = pathParts[pathParts.length - 1] || 'symphony'
+
+            const blob = new Blob([jsonString], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `${symphonyId}.json`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+        }
+
+        let wrapper = document.createElement('div')
+        wrapper.classList.add('rounded', 'flex', 'border', 'border-asset-border', 'shadow-sm', 'bg-panel-bg', 'divide-x', 'divide-solid', 'divide-asset-border')
+
+        let button = document.createElement('button')
+        button.classList.add('w-full', 'text-sm', 'font-light', 'flex', 'items-center', 'justify-center', 'py-2', 'shadow-inner', 'transition', 'focus:outline-none', 'leading-none', 'select-none', 'rounded', 'text-dark-soft', 'bg-background')
+
+        let span = document.createElement('span')
+        span.classList.add('flex', 'items-center', 'space-x-2')
+        span.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" height="16" width="16"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>'
+
+        let text = document.createElement('span')
+        text.innerText = 'Download JSON'
+
+        button.addEventListener('click', (e) => {
+            downloadJson()
+            text.innerText = 'Downloaded'
+            setTimeout(() => {
+                text.innerText = 'Download JSON'
+            }, 1000)
+        })
+
+        span.appendChild(text)
+        button.appendChild(span)
+        wrapper.appendChild(button)
         return wrapper
     }
 
@@ -378,7 +426,7 @@
             return occurrances
         }
 
-        return findTicker(json, find, {assets: 0, conditionals: 0})
+        return findTicker(json, find, { assets: 0, conditionals: 0 })
     }
 
     function findAndReplace(json, find, replace, replaceAssets, replaceIfElse) {
