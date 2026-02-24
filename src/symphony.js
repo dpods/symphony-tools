@@ -1,4 +1,146 @@
 (() => {
+    // ==========================================
+    // EDN Parser - converts Composer's EDN string to JS objects
+    // ==========================================
+
+    function parseEdn(str) {
+        let pos = 0
+
+        function skipWhitespace() {
+            while (pos < str.length && /[\s,]/.test(str[pos])) pos++
+        }
+
+        function parseValue() {
+            skipWhitespace()
+            if (pos >= str.length) return undefined
+            const ch = str[pos]
+            if (ch === '{') return parseMap()
+            if (ch === '[') return parseArray()
+            if (ch === '"') return parseString()
+            if (ch === ':') return parseKeyword()
+            if (ch === '-' || (ch >= '0' && ch <= '9')) return parseNumber()
+            if (str.startsWith('true', pos) && !/[a-zA-Z0-9_\-?!]/.test(str[pos + 4] || '')) { pos += 4; return true }
+            if (str.startsWith('false', pos) && !/[a-zA-Z0-9_\-?!]/.test(str[pos + 5] || '')) { pos += 5; return false }
+            if (str.startsWith('nil', pos) && !/[a-zA-Z0-9_\-?!]/.test(str[pos + 3] || '')) { pos += 3; return null }
+            throw new Error(`EDN parse error at position ${pos}: '${ch}'`)
+        }
+
+        function parseMap() {
+            pos++
+            const map = {}
+            skipWhitespace()
+            while (pos < str.length && str[pos] !== '}') {
+                const key = parseValue()
+                const value = parseValue()
+                map[key] = value
+                skipWhitespace()
+            }
+            if (pos < str.length) pos++
+            return map
+        }
+
+        function parseArray() {
+            pos++
+            const arr = []
+            skipWhitespace()
+            while (pos < str.length && str[pos] !== ']') {
+                arr.push(parseValue())
+                skipWhitespace()
+            }
+            if (pos < str.length) pos++
+            return arr
+        }
+
+        function parseString() {
+            pos++
+            let result = ''
+            while (pos < str.length && str[pos] !== '"') {
+                if (str[pos] === '\\') {
+                    pos++
+                    switch (str[pos]) {
+                        case 'n': result += '\n'; break
+                        case 't': result += '\t'; break
+                        case '"': result += '"'; break
+                        case '\\': result += '\\'; break
+                        default: result += str[pos]
+                    }
+                } else {
+                    result += str[pos]
+                }
+                pos++
+            }
+            if (pos < str.length) pos++
+            return result
+        }
+
+        function parseKeyword() {
+            pos++
+            let kw = ''
+            while (pos < str.length && /[a-zA-Z0-9_\-?!./]/.test(str[pos])) {
+                kw += str[pos]
+                pos++
+            }
+            return kw
+        }
+
+        function parseNumber() {
+            let num = ''
+            if (str[pos] === '-') { num += '-'; pos++ }
+            while (pos < str.length && /[0-9.]/.test(str[pos])) {
+                num += str[pos]
+                pos++
+            }
+            return Number(num)
+        }
+
+        return parseValue()
+    }
+
+    // ==========================================
+    // EDN Serializer - converts JS objects back to EDN for Composer
+    // ==========================================
+
+    // Fields whose values are EDN keywords (not quoted strings)
+    const KEYWORD_FIELDS = new Set([
+        'step', 'rebalance', 'comparator', 'lhs-fn', 'select-fn', 'sort-by-fn'
+    ])
+
+    function toEdn(value, fieldName) {
+        if (value === null || value === undefined) return 'nil'
+        if (typeof value === 'boolean') return value.toString()
+        if (typeof value === 'number') return value.toString()
+        if (typeof value === 'string') {
+            if (fieldName && KEYWORD_FIELDS.has(fieldName)) return ':' + value
+            return '"' + value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n') + '"'
+        }
+        if (Array.isArray(value)) {
+            return '[' + value.map(v => toEdn(v)).join(' ') + ']'
+        }
+        if (typeof value === 'object') {
+            const pairs = Object.entries(value).map(([k, v]) => `:${k} ${toEdn(v, k)}`)
+            return '{' + pairs.join(', ') + '}'
+        }
+        return String(value)
+    }
+
+    // ==========================================
+    // Data Access - uses EDN since getSymphonyJson() is broken
+    // ==========================================
+
+    const getSymphonyData = () => {
+        const edn = window.cli.getSymphonyEdn()
+        if (!edn) return null
+        return parseEdn(edn)
+    }
+
+    const setSymphonyData = (data) => {
+        window.cli.createSymphonyFromEdn(toEdn(data))
+    }
+
+    // ==========================================
+    // Widget Initialization
+    // ==========================================
+
     const initSymphonyWidget = () => {
         const observer = new MutationObserver(function (mutations, mutationInstance) {
             const sidebarEl = document.getElementById('sidebar')
@@ -42,7 +184,7 @@
                 replaceIfElseCheckbox.checked = false
                 findResults.classList.add('invisible')
             } else {
-                const occurances = find(getSymphonyJson(), this.value)
+                const occurances = find(getSymphonyData(), this.value)
                 replaceAssetsCheckbox.checked = true
                 replaceIfElseCheckbox.checked = true
                 findResultsAssets.innerHTML = occurances.assets
@@ -71,27 +213,31 @@
                 return
             }
 
-            const modifiedSymphonyJson = findAndReplace(getSymphonyJson(), findValue, replaceValue, replaceAssets, replaceIfElse)
-            setSymphonyJson(modifiedSymphonyJson)
+            const modifiedData = findAndReplace(getSymphonyData(), findValue, replaceValue, replaceAssets, replaceIfElse)
+            setSymphonyData(modifiedData)
 
-            const occurances = find(modifiedSymphonyJson, findValue)
+            const occurances = find(modifiedData, findValue)
             findResultsAssets.innerHTML = occurances.assets
             findResultsIfElse.innerHTML = occurances.conditionals
         })
     }
 
-    const logo = () => {
-        const span1 = document.createElement("div");
-        span1.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.40808 12.1538C2.93521 12.1538 3.15458 11.7335 3.60273 11.5343C4.03673 11.3415 4.50718 11.3574 4.99649 11.3574C5.47353 11.3574 5.97784 11.437 6.43007 11.437C6.58543 11.437 6.50484 11.3012 6.63802 11.2821C6.89508 11.2454 7.17687 11.2775 7.42561 11.3397C7.64543 11.3946 7.93944 11.5047 8.1424 11.5166C8.35706 11.5293 8.52378 11.7032 8.73972 11.7511C8.96557 11.8013 9.15653 11.7047 9.35474 11.7733C9.66431 11.8804 9.79166 11.9945 10.1335 11.9945C10.4122 11.9945 10.691 11.9945 10.9697 11.9945C11.4126 11.9945 11.7881 11.9149 12.244 11.9149C12.6714 11.9149 12.5186 11.8892 12.1865 12.0122C11.8657 12.131 11.6074 12.2334 11.2485 12.2334C10.7553 12.2334 10.1072 12.1743 9.65562 12.375C9.33143 12.5191 8.84548 12.471 8.50079 12.5476C8.33118 12.5853 8.01332 12.6317 7.86364 12.6317C7.41233 12.6317 6.96102 12.6317 6.50971 12.6317C6.03586 12.6317 5.65921 12.4724 5.19559 12.4724C4.68571 12.4724 5.43512 12.2555 5.59381 12.2379C5.98364 12.1945 6.37725 12.1538 6.77076 12.1538C7.45636 12.1538 8.10913 12.3131 8.77954 12.3131C9.14531 12.3131 9.51108 12.3131 9.87685 12.3131C10.0495 12.3131 10.1213 12.324 10.2308 12.1892C10.3554 12.0359 11.0874 12.1538 11.2839 12.1538C11.9327 12.1538 12.4908 12.4247 13.0006 11.9149" stroke="#16A34A" stroke-width="3" stroke-linecap="round"/><path d="M6.50004 2.06959V5.87892C6.50004 6.07591 6.46125 6.27096 6.38587 6.45295C6.31049 6.63494 6.2 6.8003 6.06071 6.93959L3.33338 9.66692M6.50004 2.06959C6.33271 2.08492 6.16604 2.10292 6.00004 2.12426M6.50004 2.06959C7.49789 1.9768 8.5022 1.9768 9.50004 2.06959M3.33338 9.66692L3.84671 9.53826C5.24204 9.19346 6.71459 9.35726 8.00004 10.0003C9.2855 10.6433 10.758 10.8071 12.1534 10.4623L13.2 10.2003M3.33338 9.66692L1.86538 11.1356C1.04338 11.9563 1.43138 13.3469 2.57671 13.5423C4.33938 13.8436 6.15138 14.0003 8.00004 14.0003C9.81751 14.0009 11.6318 13.8477 13.4234 13.5423C14.568 13.3469 14.956 11.9563 14.1347 11.1349L13.2 10.2003M9.50004 2.06959V5.87892C9.50004 6.27692 9.65804 6.65892 9.93938 6.93959L13.2 10.2003M9.50004 2.06959C9.66738 2.08492 9.83404 2.10292 10 2.12426" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    // ==========================================
+    // UI Components
+    // ==========================================
 
-        const span2 = document.createElement("span");
-        span2.style = 'margin-left: 0.5rem;'
-        span2.innerText = 'Symphony Tools Extension'
+    const logo = () => {
+        const icon = document.createElement("div");
+        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.40808 12.1538C2.93521 12.1538 3.15458 11.7335 3.60273 11.5343C4.03673 11.3415 4.50718 11.3574 4.99649 11.3574C5.47353 11.3574 5.97784 11.437 6.43007 11.437C6.58543 11.437 6.50484 11.3012 6.63802 11.2821C6.89508 11.2454 7.17687 11.2775 7.42561 11.3397C7.64543 11.3946 7.93944 11.5047 8.1424 11.5166C8.35706 11.5293 8.52378 11.7032 8.73972 11.7511C8.96557 11.8013 9.15653 11.7047 9.35474 11.7733C9.66431 11.8804 9.79166 11.9945 10.1335 11.9945C10.4122 11.9945 10.691 11.9945 10.9697 11.9945C11.4126 11.9945 11.7881 11.9149 12.244 11.9149C12.6714 11.9149 12.5186 11.8892 12.1865 12.0122C11.8657 12.131 11.6074 12.2334 11.2485 12.2334C10.7553 12.2334 10.1072 12.1743 9.65562 12.375C9.33143 12.5191 8.84548 12.471 8.50079 12.5476C8.33118 12.5853 8.01332 12.6317 7.86364 12.6317C7.41233 12.6317 6.96102 12.6317 6.50971 12.6317C6.03586 12.6317 5.65921 12.4724 5.19559 12.4724C4.68571 12.4724 5.43512 12.2555 5.59381 12.2379C5.98364 12.1945 6.37725 12.1538 6.77076 12.1538C7.45636 12.1538 8.10913 12.3131 8.77954 12.3131C9.14531 12.3131 9.51108 12.3131 9.87685 12.3131C10.0495 12.3131 10.1213 12.324 10.2308 12.1892C10.3554 12.0359 11.0874 12.1538 11.2839 12.1538C11.9327 12.1538 12.4908 12.4247 13.0006 11.9149" stroke="#16A34A" stroke-width="3" stroke-linecap="round"/><path d="M6.50004 2.06959V5.87892C6.50004 6.07591 6.46125 6.27096 6.38587 6.45295C6.31049 6.63494 6.2 6.8003 6.06071 6.93959L3.33338 9.66692M6.50004 2.06959C6.33271 2.08492 6.16604 2.10292 6.00004 2.12426M6.50004 2.06959C7.49789 1.9768 8.5022 1.9768 9.50004 2.06959M3.33338 9.66692L3.84671 9.53826C5.24204 9.19346 6.71459 9.35726 8.00004 10.0003C9.2855 10.6433 10.758 10.8071 12.1534 10.4623L13.2 10.2003M3.33338 9.66692L1.86538 11.1356C1.04338 11.9563 1.43138 13.3469 2.57671 13.5423C4.33938 13.8436 6.15138 14.0003 8.00004 14.0003C9.81751 14.0009 11.6318 13.8477 13.4234 13.5423C14.568 13.3469 14.956 11.9563 14.1347 11.1349L13.2 10.2003M9.50004 2.06959V5.87892C9.50004 6.27692 9.65804 6.65892 9.93938 6.93959L13.2 10.2003M9.50004 2.06959C9.66738 2.08492 9.83404 2.10292 10 2.12426" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' // static hardcoded SVG icon
+
+        const label = document.createElement("span");
+        label.style = 'margin-left: 0.5rem;'
+        label.innerText = 'Symphony Tools Extension'
 
         let divLogo = document.createElement("div");
         divLogo.classList.add('text-sm', 'text-dark', 'font-medium', 'whitespace-nowrap', 'truncate', 'flex', 'items-center', 'text-left')
-        divLogo.appendChild(span1)
-        divLogo.appendChild(span2)
+        divLogo.appendChild(icon)
+        divLogo.appendChild(label)
         return divLogo
     }
 
@@ -104,15 +250,15 @@
 
         let span = document.createElement('span')
         span.classList.add('flex', 'items-cente', 'space-x-2')
-        span.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" height="16" width="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" /></svg>'
+        span.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" height="16" width="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" /></svg>' // static hardcoded SVG icon
 
         let text = document.createElement('span')
         text.innerText = 'Strip Metadata'
 
         button.addEventListener('click', (e) => {
-            const symphonyJson = getSymphonyJson()
-            const modifiedSymphonyJson = removeMetadata(symphonyJson)
-            setSymphonyJson(modifiedSymphonyJson)
+            const data = getSymphonyData()
+            const modifiedData = removeMetadata(data)
+            setSymphonyData(modifiedData)
         })
 
         span.appendChild(text)
@@ -258,11 +404,12 @@
 
     const clickToCopy = () => {
         const copyJson = () => {
-            navigator.clipboard.writeText(JSON.stringify(cli.getSymphonyJson()));
+            const data = getSymphonyData()
+            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
         }
 
         const copyEdn = () => {
-            navigator.clipboard.writeText(cli.getSymphonyEdn());
+            navigator.clipboard.writeText(window.cli.getSymphonyEdn());
         }
 
         const button = (buttonText, func, css) => {
@@ -298,10 +445,9 @@
 
     const downloadJsonButton = () => {
         const downloadJson = () => {
-            const symphonyJson = getSymphonyJson()
-            const jsonString = JSON.stringify(symphonyJson, null, 2)
+            const data = getSymphonyData()
+            const jsonString = JSON.stringify(data, null, 2)
 
-            // Extract symphony ID from URL (e.g., /symphony/abc123 -> abc123)
             const pathParts = window.location.pathname.split('/')
             const symphonyId = pathParts[pathParts.length - 1] || 'symphony'
 
@@ -324,7 +470,7 @@
 
         let span = document.createElement('span')
         span.classList.add('flex', 'items-center', 'space-x-2')
-        span.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" height="16" width="16"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>'
+        span.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" height="16" width="16"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>' // static hardcoded SVG icon
 
         let text = document.createElement('span')
         text.innerText = 'Download JSON'
@@ -345,17 +491,18 @@
 
     const donate = () => {
         const wrapper = document.createElement('div')
-        wrapper.innerHTML = '<a href="https://www.buymeacoffee.com/dpods" class="text-xs underline font-light" target="_blank">Support this extension</a>'
+        const link = document.createElement('a')
+        link.href = 'https://www.buymeacoffee.com/dpods'
+        link.className = 'text-xs underline font-light'
+        link.target = '_blank'
+        link.textContent = 'Support this extension'
+        wrapper.appendChild(link)
         return wrapper
     }
 
-    const getSymphonyJson = () => {
-        return window.cli.getSymphonyJson()
-    }
-
-    const setSymphonyJson = (json) => {
-        window.cli.createSymphonyFromJson(json)
-    }
+    // ==========================================
+    // Symphony Data Operations
+    // ==========================================
 
     function removeMetadata(json) {
         function isAssetNode(json) {
@@ -479,6 +626,10 @@
 
         return findAndReplaceTicker(json, find, replace)
     }
+
+    // ==========================================
+    // Navigation & Initialization
+    // ==========================================
 
     if (window.location.pathname.startsWith('/symphony/') && !window.location.pathname.endsWith('/detail')) {
         initSymphonyWidget()

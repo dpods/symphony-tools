@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Symphony Tools Extension",
+  "name": "J's Symphony Tools Extension",
   "description": "Utility extension that makes working with Composer Symphonies easier",
   "version": "3.1.0",
   "icons": {
