@@ -415,12 +415,25 @@
 
     const clickToCopy = () => {
         const copyJson = () => {
-            const data = getSymphonyData()
-            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+            const json = window.cli?.getSymphonyJson()
+            if (json) {
+                navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+            } else {
+                // Fall back to parsing EDN into JSON
+                const data = getSymphonyData()
+                navigator.clipboard.writeText(data ? JSON.stringify(data, null, 2) : '');
+            }
         }
 
         const copyEdn = () => {
-            navigator.clipboard.writeText(window.cli.getSymphonyEdn());
+            const edn = window.cli?.getSymphonyEdn()
+            if (edn) {
+                navigator.clipboard.writeText(edn);
+            } else {
+                // Fall back to converting JSON data to EDN
+                const data = getSymphonyData()
+                navigator.clipboard.writeText(data ? toEdn(data) : '');
+            }
         }
 
         const button = (buttonText, func, css) => {
