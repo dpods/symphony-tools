@@ -128,13 +128,24 @@
     // ==========================================
 
     const getSymphonyData = () => {
-        const edn = window.cli.getSymphonyEdn()
-        if (!edn) return null
-        return parseEdn(edn)
+        // Try EDN first (structured), fall back to JSON
+        const edn = window.cli?.getSymphonyEdn()
+        if (edn) return parseEdn(edn)
+
+        const json = window.cli?.getSymphonyJson()
+        if (json) return json
+
+        return null
     }
 
     const setSymphonyData = (data) => {
-        window.cli.createSymphonyFromEdn(toEdn(data))
+        // Try EDN first, fall back to JSON
+        const edn = window.cli?.getSymphonyEdn()
+        if (edn) {
+            window.cli.createSymphonyFromEdn(toEdn(data))
+        } else {
+            window.cli.createSymphonyFromJson(data)
+        }
     }
 
     // ==========================================
