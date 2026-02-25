@@ -631,12 +631,12 @@
     // Navigation & Initialization
     // ==========================================
 
-    if (window.location.pathname.startsWith('/symphony/') && !window.location.pathname.endsWith('/detail')) {
+    if (window.location.pathname.startsWith('/editor/') && !window.location.pathname.endsWith('/detail')) {
         initSymphonyWidget()
     }
 
     window.navigation.addEventListener("navigate", (event) => {
-        if (event.destination.url.startsWith('https://app.composer.trade/symphony/')
+        if (event.destination.url.startsWith('https://app.composer.trade/editor/')
             && !event.destination.url.endsWith('/detail')) {
             initSymphonyWidget()
         }
