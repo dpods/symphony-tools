@@ -21,7 +21,7 @@
     {
       "matches": [
         "https://app.composer.trade/portfolio",
-        "https://app.composer.trade/symphony/*"
+        "https://app.composer.trade/editor/*"
       ],
       "js": [
         "common.js",
