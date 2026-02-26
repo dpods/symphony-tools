@@ -301,7 +301,7 @@
             const symphonyJson = getSymphonyJson()
             const jsonString = JSON.stringify(symphonyJson, null, 2)
 
-            // Extract symphony ID from URL (e.g., /symphony/abc123 -> abc123)
+            // Extract symphony ID from URL (e.g., /editor/abc123 -> abc123)
             const pathParts = window.location.pathname.split('/')
             const symphonyId = pathParts[pathParts.length - 1] || 'symphony'
 
@@ -480,12 +480,12 @@
         return findAndReplaceTicker(json, find, replace)
     }
 
-    if (window.location.pathname.startsWith('/symphony/') && !window.location.pathname.endsWith('/detail')) {
+    if (window.location.pathname.startsWith('/editor/') && !window.location.pathname.endsWith('/detail')) {
         initSymphonyWidget()
     }
 
     window.navigation.addEventListener("navigate", (event) => {
-        if (event.destination.url.startsWith('https://app.composer.trade/symphony/')
+        if (event.destination.url.startsWith('https://app.composer.trade/editor/')
             && !event.destination.url.endsWith('/detail')) {
             initSymphonyWidget()
         }
